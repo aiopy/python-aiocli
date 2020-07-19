@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "aiocli"
+version = "1.0.0"
+description = "Simple and lightweight async console runner."
+license = "MIT"
+authors = ["ticdenis <denisnavarroalcaide@outlook.es>"]
+readme = "README.md"
+repository = "https://github.com/ticdenis/python-aiocli"
+documentation = "https://github.com/ticdenis/python-aiocli/blob/master/README.md"
+keywords = ["asyncio", "async", "aio", "cli", "console"]
+classifiers = ["Topic :: Software Development :: Libraries :: Python Modules"]
+include = ["LICENSE", "README.md"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

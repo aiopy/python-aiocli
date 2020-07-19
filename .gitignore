@@ -1,0 +1,15 @@
+# External
+.DS_Store/
+.idea/
+.vscode/
+*.iml
+
+# Internal
+.pypirc
+.venv/
+__pycache__/
+poetry.lock
+*.pyc
+*.pyo
+dist/
+*.egg-info/
