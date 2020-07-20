@@ -1,8 +1,15 @@
-from argparse import ArgumentParser
-from argparse import RawTextHelpFormatter
-from typing import List, Awaitable, Dict, Tuple, Optional, Any, Callable, NamedTuple, Coroutine, final
+from argparse import ArgumentParser, RawTextHelpFormatter
+from typing import List, Awaitable, Dict, Tuple, Optional, Any, Callable, NamedTuple, Coroutine
 
 from typing_extensions import Protocol
+
+__all__ = (
+    # commander_app
+    'Command',
+    'command',
+    'CommandHandler',
+    'Application',
+)
 
 
 class CommandHandler(Protocol):
@@ -16,10 +23,18 @@ class Command(NamedTuple):
     optionals: List[Tuple[str, Dict[str, Any]]]
 
 
+def command(
+        name: str,
+        handler: CommandHandler,
+        positionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
+        optionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None
+) -> Command:
+    return Command(name=name, handler=handler, positionals=positionals or [], optionals=optionals or [])
+
+
 AppSignal = Callable[['Application'], Awaitable[None]]
 
 
-@final
 class Application:
     _parser: ArgumentParser
     _parsers: Dict[str, ArgumentParser]
@@ -31,7 +46,7 @@ class Application:
 
     def __init__(
             self,
-            commands: List[Command],
+            commands: Optional[List[Command]] = None,
             *,
             name: str = 'aiocli.commander',
             description: str = '',
@@ -39,12 +54,11 @@ class Application:
         self._parser = ArgumentParser(
             description=description,
             prog=name,
-            formatter_class=RawTextHelpFormatter
+            formatter_class=RawTextHelpFormatter,
         )
         self._parsers = {}
         self._commands = {}
-        for command in commands:
-            self._add_command(command)
+        self.add_commands(commands or [])
         self._exit_code = 0
         self._on_startup = []
         self._on_shutdown = []
@@ -58,6 +72,10 @@ class Application:
         namespace = self._parsers[command_name].parse_args(args[1:])
         self._exit_code = await self._commands[command_name].handler(vars(namespace))
         return self._exit_code
+
+    def add_commands(self, commands: List[Command]) -> None:
+        for cmd in commands:
+            self._add_command(cmd)
 
     def get_command(self, name: str) -> Optional[Command]:
         return self._commands.get(name, None)
@@ -91,12 +109,12 @@ class Application:
     async def cleanup(self) -> None:
         await self._execute_app_signals(self._on_cleanup)
 
-    def _add_command(self, command: Command) -> None:
-        self._commands[command.name] = command
-        parser = ArgumentParser(prog=command.name)
-        _ = [parser.add_argument(arg[0], **arg[1]) for arg in command.positionals + command.optionals]
-        self._parsers[command.name] = parser
-        self._parser.description = f'{self._parser.description}{command.name}\n'
+    def _add_command(self, cmd: Command) -> None:
+        self._commands[cmd.name] = cmd
+        parser = ArgumentParser(prog=cmd.name)
+        _ = [parser.add_argument(arg[0], **arg[1]) for arg in cmd.positionals + cmd.optionals]
+        self._parsers[cmd.name] = parser
+        self._parser.description = '{0}{1}\n'.format(self._parser.description, cmd.name)
 
     async def _execute_app_signals(self, app_signals: List[AppSignal]) -> None:
         _ = [await app_signal(self) for app_signal in app_signals]

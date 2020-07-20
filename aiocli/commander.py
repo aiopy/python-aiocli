@@ -4,12 +4,15 @@ from asyncio import get_event_loop, gather, all_tasks, iscoroutine
 from asyncio.events import AbstractEventLoop
 from typing import Awaitable, Optional, Union, cast, List
 
-from aiocli.commander_app import Application, Command
+from aiocli.commander_app import Application, Command, command
 
 __all__ = (
-    'run_app',
+    # commander_app
     'Application',
-    'Command'
+    'Command',
+    'command',
+    # commander
+    'run_app',
 )
 
 
