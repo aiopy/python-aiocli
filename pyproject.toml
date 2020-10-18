@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aiocli"
-version = "1.1.1"
+version = "1.2.1"
 description = "Simple and lightweight async console runner."
 license = "MIT"
 authors = ["ticdenis <denisnavarroalcaide@outlook.es>"]
