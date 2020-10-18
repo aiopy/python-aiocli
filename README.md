@@ -18,12 +18,12 @@ pip install aiocli
 # examples/commander.py
 from aiocli import commander
 
+app = commander.Application()
+
+@app.command(name='greet:to', positionals=[('--name', {'default': 'World!'})])
 async def handle(args: dict) -> int:
     print('Hello ' + args.get('name'))
     return 0
-
-app = commander.Application()
-app.add_commands([commander.command('greet:to', handle, [('--name', {'default': 'World!'})])])
 
 if __name__ == '__main__':
     commander.run_app(app)

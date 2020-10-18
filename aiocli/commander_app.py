@@ -1,7 +1,6 @@
 from argparse import ArgumentParser, RawTextHelpFormatter
-from typing import List, Awaitable, Dict, Tuple, Optional, Any, Callable, NamedTuple, Coroutine
-
-from typing_extensions import Protocol
+from asyncio import iscoroutinefunction
+from typing import Any, Awaitable, Callable, Coroutine, Dict, List, NamedTuple, Optional, Tuple, Union
 
 __all__ = (
     # commander_app
@@ -11,9 +10,7 @@ __all__ = (
     'Application',
 )
 
-
-class CommandHandler(Protocol):
-    def __call__(self, args: Dict[str, Any]) -> Coroutine[Any, Any, int]: ...
+CommandHandler = Callable[[Dict[str, Any]], Union[Callable[[Any], int], Coroutine[Any, Any, int]]]
 
 
 class Command(NamedTuple):
@@ -24,15 +21,15 @@ class Command(NamedTuple):
 
 
 def command(
-        name: str,
-        handler: CommandHandler,
-        positionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
-        optionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None
+    name: str,
+    handler: CommandHandler,
+    positionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
+    optionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None
 ) -> Command:
     return Command(name=name, handler=handler, positionals=positionals or [], optionals=optionals or [])
 
 
-AppSignal = Callable[['Application'], Awaitable[None]]
+AppSignal = Callable[['Application'], Union[None, Awaitable[None]]]
 
 
 class Application:
@@ -45,33 +42,73 @@ class Application:
     _on_cleanup: List[AppSignal]
 
     def __init__(
-            self,
-            commands: Optional[List[Command]] = None,
-            *,
-            name: str = 'aiocli.commander',
-            description: str = '',
+        self,
+        commands: Optional[List[Command]] = None,
+        *,
+        name: str = 'aiocli.commander',
+        description: str = '',
+        version: str = 'unknown',
+        on_startup: Optional[List[AppSignal]] = None,
+        on_shutdown: Optional[List[AppSignal]] = None,
+        on_cleanup: Optional[List[AppSignal]] = None,
     ) -> None:
         self._parser = ArgumentParser(
             description=description,
             prog=name,
             formatter_class=RawTextHelpFormatter,
         )
+        self._parser.add_argument('--version', action='version', version=version)
         self._parsers = {}
         self._commands = {}
         self.add_commands(commands or [])
         self._exit_code = 0
-        self._on_startup = []
-        self._on_shutdown = []
-        self._on_cleanup = []
+        self._on_startup = on_startup if on_startup else []
+        self._on_shutdown = on_shutdown if on_shutdown else []
+        self._on_cleanup = on_cleanup if on_cleanup else []
 
     async def __call__(self, args: List[str]) -> int:
         command_name = args[0] if len(args) > 0 else None
-        if command_name not in self._parsers:
+        is_optional_argument = command_name and command_name[0] == '-'
+        if command_name not in self._parsers and not is_optional_argument:
             self._parser.print_help()
             return 0
+        if is_optional_argument:
+            self._parser.parse_args()
+            return 0
         namespace = self._parsers[command_name].parse_args(args[1:])
-        self._exit_code = await self._commands[command_name].handler(vars(namespace))
+        handler = self._commands[command_name].handler
+        self._exit_code = await handler(vars(namespace)) if iscoroutinefunction(handler) else handler(vars(namespace))
         return self._exit_code
+
+    def include_router(self, router: 'Application') -> None:
+        for name, cmd in router._commands.items():
+            self._commands[name] = cmd
+            self._parsers[name] = router._parsers[name]
+            self._update_parser_description(name)
+        for on_startup in router._on_startup:
+            self._on_startup.append(on_startup)
+        for on_shutdown in router._on_shutdown:
+            self._on_shutdown.append(on_shutdown)
+        for on_cleanup in router._on_cleanup:
+            self._on_cleanup.append(on_cleanup)
+
+    def command(
+        self,
+        name: str,
+        *,
+        positionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
+        optionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
+    ) -> Callable[[CommandHandler], CommandHandler]:
+        def decorator(handler: CommandHandler) -> CommandHandler:
+            self._add_command(Command(
+                name=name,
+                handler=handler,
+                positionals=positionals or [],
+                optionals=optionals or [],
+            ))
+            return handler
+
+        return decorator
 
     def add_commands(self, commands: List[Command]) -> None:
         for cmd in commands:
@@ -114,7 +151,11 @@ class Application:
         parser = ArgumentParser(prog=cmd.name)
         _ = [parser.add_argument(arg[0], **arg[1]) for arg in cmd.positionals + cmd.optionals]
         self._parsers[cmd.name] = parser
-        self._parser.description = '{0}{1}\n'.format(self._parser.description, cmd.name)
+        self._update_parser_description(cmd.name)
 
     async def _execute_app_signals(self, app_signals: List[AppSignal]) -> None:
-        _ = [await app_signal(self) for app_signal in app_signals]
+        for app_signal in app_signals:
+            await app_signal(self) if iscoroutinefunction(app_signal) else app_signal(self)
+
+    def _update_parser_description(self, name: str) -> None:
+        self._parser.description = '{0}{1}\n'.format(self._parser.description, name)
