@@ -1,8 +1,7 @@
-import asyncio
 import sys
-from asyncio import AbstractEventLoop, get_event_loop, wait_for
+from asyncio import AbstractEventLoop, TimeoutError, get_event_loop, wait_for
 from types import TracebackType
-from typing import Optional, Any, Type, List
+from typing import Any, List, Optional, Type
 
 from aiocli.commander import AppRunner
 from aiocli.commander_app import Application
@@ -20,15 +19,15 @@ class TestCommander:
         self._runner = None
 
     async def handle(
-            self,
-            argv: Optional[List[str]] = None,
-            *,
-            timeout: Optional[float] = None,
-            timeout_exit_code: Optional[int] = None,
+        self,
+        argv: Optional[List[str]] = None,
+        *,
+        timeout: Optional[float] = None,
+        timeout_exit_code: Optional[int] = None,
     ) -> int:
         try:
             await wait_for(self._app.__call__(argv or sys.argv[1:]), timeout=timeout)
-        except asyncio.exceptions.TimeoutError:
+        except TimeoutError:
             if timeout_exit_code is not None:
                 return timeout_exit_code
         return int(self._app.exit_code)
@@ -48,10 +47,10 @@ class TestCommander:
             await self._runner.cleanup()
 
     async def __aexit__(
-            self,
-            exc_type: Optional[Type[BaseException]],
-            exc_value: Optional[BaseException],
-            traceback: Optional[TracebackType]
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
     ) -> None:
         await self.close()
 
@@ -67,11 +66,11 @@ class TestClient:
         self._commander = commander
 
     async def handle(
-            self,
-            argv: Optional[List[str]] = None,
-            *,
-            timeout: Optional[float] = None,
-            timeout_exit_code: Optional[int] = 1,
+        self,
+        argv: Optional[List[str]] = None,
+        *,
+        timeout: Optional[float] = None,
+        timeout_exit_code: Optional[int] = 1,
     ) -> int:
         return await self._commander.handle(argv, timeout=timeout, timeout_exit_code=timeout_exit_code)
 
@@ -86,9 +85,9 @@ class TestClient:
         await self._commander.close()
 
     async def __aexit__(
-            self,
-            exc_type: Optional[Type[BaseException]],
-            exc: Optional[BaseException],
-            tb: Optional[TracebackType]
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        traceback: Optional[TracebackType],
     ) -> None:
         await self.close()

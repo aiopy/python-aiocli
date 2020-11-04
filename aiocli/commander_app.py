@@ -1,6 +1,17 @@
 from argparse import ArgumentParser, RawTextHelpFormatter
 from asyncio import iscoroutinefunction
-from typing import Any, Awaitable, Callable, Coroutine, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Coroutine,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    Tuple,
+    Union,
+)
 
 __all__ = (
     # commander_app
@@ -24,7 +35,7 @@ def command(
     name: str,
     handler: CommandHandler,
     positionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
-    optionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None
+    optionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
 ) -> Command:
     return Command(name=name, handler=handler, positionals=positionals or [], optionals=optionals or [])
 
@@ -67,17 +78,17 @@ class Application:
         self._on_cleanup = on_cleanup if on_cleanup else []
 
     async def __call__(self, args: List[str]) -> int:
-        command_name = args[0] if len(args) > 0 else None
-        is_optional_argument = command_name and command_name[0] == '-'
-        if command_name not in self._parsers and not is_optional_argument:
+        command_name = args[0] if len(args) > 0 else ''
+        if command_name not in self._parsers or command_name in ['-h', '--help']:
             self._parser.print_help()
-            return 0
-        if is_optional_argument:
-            self._parser.parse_args()
-            return 0
-        namespace = self._parsers[command_name].parse_args(args[1:])
-        handler = self._commands[command_name].handler
-        self._exit_code = await handler(vars(namespace)) if iscoroutinefunction(handler) else handler(vars(namespace))
+            self._exit_code = 0
+        else:
+            args = vars(self._parsers[command_name].parse_args(args[1:]))  # type: ignore
+            handler = self._commands[command_name].handler
+            if iscoroutinefunction(handler):
+                self._exit_code = await handler(args)  # type: ignore
+            else:
+                self._exit_code = handler(args)  # type: ignore
         return self._exit_code
 
     def include_router(self, router: 'Application') -> None:
@@ -100,12 +111,14 @@ class Application:
         optionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
     ) -> Callable[[CommandHandler], CommandHandler]:
         def decorator(handler: CommandHandler) -> CommandHandler:
-            self._add_command(Command(
-                name=name,
-                handler=handler,
-                positionals=positionals or [],
-                optionals=optionals or [],
-            ))
+            self._add_command(
+                Command(
+                    name=name,
+                    handler=handler,
+                    positionals=positionals or [],
+                    optionals=optionals or [],
+                )
+            )
             return handler
 
         return decorator
@@ -124,6 +137,9 @@ class Application:
     @property
     def exit_code(self) -> int:
         return self._exit_code
+
+    def exit(self) -> None:
+        self._parser.exit(status=self._exit_code)
 
     @property
     def on_startup(self) -> List[AppSignal]:
@@ -155,7 +171,7 @@ class Application:
 
     async def _execute_app_signals(self, app_signals: List[AppSignal]) -> None:
         for app_signal in app_signals:
-            await app_signal(self) if iscoroutinefunction(app_signal) else app_signal(self)
+            _ = await app_signal(self) if iscoroutinefunction(app_signal) else app_signal(self)  # type: ignore
 
     def _update_parser_description(self, name: str) -> None:
         self._parser.description = '{0}{1}\n'.format(self._parser.description, name)

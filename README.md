@@ -34,9 +34,11 @@ if __name__ == '__main__':
 - Python >= 3.6
 
 ## Contributing
+
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
 
 ## License
+
 [MIT](https://github.com/ticdenis/python-aiocli/blob/master/LICENSE)

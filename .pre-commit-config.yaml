@@ -1,0 +1,24 @@
+---
+repos:
+  - repo: local
+    hooks:
+      - id: fmt
+        name: fmt
+        entry: sh pyscript.sh fmt
+        language: system
+        stages: [ commit-msg ]
+      - id: security-analysis
+        name: security-analysis
+        entry: sh pyscript.sh security_analysis
+        language: system
+        stages: [ commit-msg ]
+      - id: static-analysis
+        name: static-analysis
+        entry: sh pyscript.sh static_analysis
+        language: system
+        stages: [ commit-msg ]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: master
+    hooks:
+      - id: no-commit-to-branch
+        stages: [ commit-msg ]

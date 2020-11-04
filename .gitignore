@@ -5,11 +5,12 @@
 *.iml
 
 # Internal
-.pypirc
-.venv/
-__pycache__/
-poetry.lock
-*.pyc
-*.pyo
-dist/
 *.egg-info/
+.coverage
+.env.local
+.gitignore
+*.pyc
+__pycache__/
+build/
+dist/
+var/

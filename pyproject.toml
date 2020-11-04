@@ -1,6 +1,6 @@
-[tool.poetry]
+[metadata]
 name = "aiocli"
-version = "1.2.1"
+version = "1.2.2"
 description = "Simple and lightweight async console runner."
 license = "MIT"
 authors = ["ticdenis <denisnavarroalcaide@outlook.es>"]
@@ -11,9 +11,44 @@ keywords = ["asyncio", "async", "aio", "cli", "console"]
 classifiers = ["Topic :: Software Development :: Libraries :: Python Modules"]
 include = ["LICENSE", "README.md"]
 
-[tool.poetry.dependencies]
-python = "^3.6"
-
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=30.3.0", "wheel>=0.35.1"]
+
+[tool.black]
+include = '\.pyi?$'
+line-length = 120
+skip-string-normalization = true
+
+[tool.isort]
+profile = "black"
+
+[tool.liccheck]
+authorized_licenses = ["MIT", "BSD", "PSF", "Python Software Foundation", "Apache License 2.0", "Apache Software", "LGPL", "Mozilla Public License 2.0 (MPL 2.0)", "MPL 2.0", "GPL", "GNU General Public License (GPL)"]
+unauthorized_licenses = []
+[tool.liccheck.authorized_packages]
+uuid = "1.30"
+filelock = "3.0.12"
+
+[tool.pylint.master]
+jobs = "0"
+[tool.pylint.messages_control]
+disable = "C0114,C0115,C0116,C0301,W0212,W0622"
+
+[tool.pytest.ini_options]
+cache_dir = "var/cache/.pytest_cache"
+addopts = "-q -n auto -p no:warnings --no-cov-on-fail"
+testpaths = ["tests"]
+
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py38
+isolated_build = True
+toxworkdir = var/tox
+skipsdist = True
+
+[testenv]
+deps = -r requirements-dev.txt
+"""

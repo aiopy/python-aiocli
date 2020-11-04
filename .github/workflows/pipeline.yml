@@ -1,0 +1,60 @@
+name: CI & CD
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+
+  CI:
+    timeout-minutes: 15
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.6.1'
+      - name: deps
+        timeout-minutes: 1
+        run: sh pyscript.sh install
+      - name: security-analysis
+        timeout-minutes: 1
+        run: sh pyscript.sh security_analysis
+      - name: static-analysis
+        timeout-minutes: 1
+        run: sh pyscript.sh static_analysis
+      - name: test
+        timeout-minutes: 3
+        run: sh pyscript.sh test
+      - name: clean
+        timeout-minutes: 1
+        run: sh pyscript.sh clean
+
+  CD:
+    if: github.ref == 'refs/heads/master'
+    needs: CI
+    timeout-minutes: 15
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.6.12'
+      - name: deps
+        timeout-minutes: 1
+        run: sh pyscript.sh install
+      - name: build
+        run: sh pyscript.sh build
+      - name: deploy
+        env:
+            TWINE_USERNAME=${{ secrets.POETRY_HTTP_BASIC_PYPI_USERNAME }}
+            TWINE_PASSWORD=${{ secrets.POETRY_HTTP_BASIC_PYPI_PASSWORD }}
+        run: sh pyscript.sh deploy
