@@ -1,6 +1,12 @@
+import sys
 from asyncio import AbstractEventLoop, get_event_loop_policy
 from typing import List, Optional, Union
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
+
+if sys.version_info >= (3, 8):
+    from unittest.mock import AsyncMock
+else:
+    from asyncmock import AsyncMock
 
 from nest_asyncio import apply
 from pytest import fixture

@@ -33,7 +33,7 @@ filelock = "3.0.12"
 [tool.pylint.master]
 jobs = "0"
 [tool.pylint.messages_control]
-disable = "C0114,C0115,C0116,C0301,W0212,W0622"
+disable = "C0114,C0115,C0116,C0301,W0212,W0611,W0622"
 
 [tool.pytest.ini_options]
 cache_dir = "var/cache/.pytest_cache"

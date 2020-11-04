@@ -1,6 +1,7 @@
+import asyncio
 import signal
 import sys
-from asyncio import Task, gather, get_event_loop, iscoroutine
+from asyncio import gather, get_event_loop, iscoroutine
 from asyncio.events import AbstractEventLoop
 from typing import Any, Awaitable, List, Optional, Set, Union, cast
 
@@ -26,7 +27,7 @@ def _raise_graceful_exit() -> None:
     raise GracefulExit()
 
 
-def _cancel_tasks(to_cancel: Set[Task[Any]], loop: AbstractEventLoop) -> None:
+def _cancel_tasks(to_cancel: Set['asyncio.Task[Any]'], loop: AbstractEventLoop) -> None:
     if not to_cancel:
         return
     for task in to_cancel:
@@ -126,6 +127,6 @@ def run_app(
     except (GracefulExit, KeyboardInterrupt):  # pragma: no cover
         pass
     finally:
-        _cancel_tasks(all_tasks(loop), loop)
+        _cancel_tasks(to_cancel=all_tasks(loop=loop), loop=loop)
         loop.run_until_complete(loop.shutdown_asyncgens())
         loop.close()
