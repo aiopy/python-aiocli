@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import signal
 import sys
-from asyncio import Task, all_tasks, gather, get_event_loop, iscoroutine
+from asyncio import Task, gather, get_event_loop, iscoroutine
 from asyncio.events import AbstractEventLoop
 from typing import Any, Awaitable, List, Optional, Set, Union, cast
 
@@ -16,6 +14,8 @@ __all__ = (
     # commander
     'run_app',
 )
+
+from aiocli.helpers import all_tasks
 
 
 class GracefulExit(SystemExit):

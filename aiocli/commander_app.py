@@ -1,5 +1,4 @@
 from argparse import ArgumentParser, RawTextHelpFormatter
-from asyncio import iscoroutinefunction
 from typing import (
     Any,
     Awaitable,
@@ -20,6 +19,8 @@ __all__ = (
     'CommandHandler',
     'Application',
 )
+
+from aiocli.helpers import iscoroutinefunction
 
 CommandHandler = Callable[[Dict[str, Any]], Union[Callable[[Any], int], Coroutine[Any, Any, int]]]
 
