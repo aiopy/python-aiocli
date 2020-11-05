@@ -10,7 +10,7 @@ def all_tasks(loop: Optional[asyncio.AbstractEventLoop] = None) -> Set["asyncio.
 
 
 if sys.version_info >= (3, 7):
-    all_tasks = asyncio.all_tasks
+    all_tasks = getattr(asyncio, 'all_tasks')
 
 
 def iscoroutinefunction(func: Callable[..., Any]) -> bool:
