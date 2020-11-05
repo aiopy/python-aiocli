@@ -76,7 +76,7 @@ _coverage() {
 
 _clean() {
   find . \( -name "__pycache__" -o -name "*.pyc" \) -print0 | xargs -0 rm -rf
-  rm -rf var
+  rm -rf build dist var
 }
 
 project=aiocli

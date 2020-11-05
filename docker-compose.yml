@@ -1,0 +1,11 @@
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    command: test
+    volumes:
+      - .:/app
+
+version: "3.7"

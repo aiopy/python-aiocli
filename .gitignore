@@ -9,6 +9,7 @@
 .coverage
 .env.local
 .gitignore
+.python-version
 *.pyc
 __pycache__/
 build/
