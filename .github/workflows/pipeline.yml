@@ -55,6 +55,6 @@ jobs:
         run: sh pyscript.sh build
       - name: deploy
         env:
-            TWINE_USERNAME=${{ secrets.POETRY_HTTP_BASIC_PYPI_USERNAME }}
-            TWINE_PASSWORD=${{ secrets.POETRY_HTTP_BASIC_PYPI_PASSWORD }}
+            TWINE_USERNAME: ${{ secrets.POETRY_HTTP_BASIC_PYPI_USERNAME }}
+            TWINE_PASSWORD: ${{ secrets.POETRY_HTTP_BASIC_PYPI_PASSWORD }}
         run: sh pyscript.sh deploy
