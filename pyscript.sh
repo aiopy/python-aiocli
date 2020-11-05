@@ -98,7 +98,7 @@ export PYTHONUNBUFFERED=1
 case "$function" in
 -h | --help) function=help ;;
 -v | --version) function=version ;;
-help | version | install | fmt | security_analysis | static_analysis | test | coverage | clean) function=$function ;;
+help | version | build | deploy | install | fmt | security_analysis | static_analysis | test | coverage | clean) function=$function ;;
 *) echo >&2 "pyscript: '$function' is not a pyscript command." && exit 1 ;;
 esac
 
