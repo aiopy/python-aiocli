@@ -10,7 +10,7 @@ with open('README.md', 'r') as file:
 author = metadata['authors'][0].split(' ')[0]
 
 setup(
-    name=metadata['name'] + '-' + author,
+    name=metadata['name'],
     version=metadata['version'],
     description=metadata['description'],
     long_description=long_description,
