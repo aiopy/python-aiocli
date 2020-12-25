@@ -1,4 +1,5 @@
 from argparse import ArgumentParser, RawTextHelpFormatter
+from inspect import signature
 from typing import (
     Any,
     Awaitable,
@@ -18,11 +19,21 @@ __all__ = (
     'command',
     'CommandHandler',
     'Application',
+    'Depends',
 )
 
-from aiocli.helpers import iscoroutinefunction
+from .helpers import iscoroutinefunction
 
-CommandHandler = Callable[[Dict[str, Any]], Union[Callable[[Any], int], Coroutine[Any, Any, int]]]
+CommandHandler = Callable[..., Union[Callable[[Any], int], Coroutine[Any, Any, int]]]
+
+
+class _Depends:
+    def __init__(self, dependency: Callable[..., Any]) -> None:
+        self.dependency = dependency
+
+
+def Depends(dependency: Callable[..., Any]) -> Any:
+    return _Depends(dependency=dependency)
 
 
 class Command(NamedTuple):
@@ -84,12 +95,13 @@ class Application:
             self._parser.print_help()
             self._exit_code = 0
         else:
-            args = vars(self._parsers[command_name].parse_args(args[1:]))  # type: ignore
             handler = self._commands[command_name].handler
+            args = vars(self._parsers[command_name].parse_args(args[1:]))  # type: ignore
+            kwargs = await self._resolve_command_handler_kwargs(handler, args)  # type: ignore
             if iscoroutinefunction(handler):
-                self._exit_code = await handler(args)  # type: ignore
+                self._exit_code = await handler(**kwargs)  # type: ignore
             else:
-                self._exit_code = handler(args)  # type: ignore
+                self._exit_code = handler(**kwargs)  # type: ignore
         return self._exit_code
 
     def include_router(self, router: 'Application') -> None:
@@ -176,3 +188,30 @@ class Application:
 
     def _update_parser_description(self, name: str) -> None:
         self._parser.description = '{0}{1}\n'.format(self._parser.description, name)
+
+    @classmethod
+    async def _resolve_command_handler_kwargs(cls, call: CommandHandler, cmd_args: Dict[str, Any]) -> Dict[str, Any]:
+        kwargs = {}
+        for param in signature(call).parameters.values():
+            name: str = param.name
+            if name in cmd_args:
+                value = cmd_args[name]
+                kwargs.update({name: value})
+                continue
+            if name not in kwargs:
+                value = param.default
+                if isinstance(value, _Depends):
+                    value = await cls._resolve_command_handler_depends_args(value)
+                kwargs.update({name: value})
+                continue
+        return kwargs
+
+    @classmethod
+    async def _resolve_command_handler_depends_args(cls, depends: _Depends) -> Any:
+        kwargs = {}
+        for param in signature(depends.dependency).parameters.values():
+            value: Any = param.default
+            if isinstance(value, _Depends):
+                value = await cls._resolve_command_handler_depends_args(value)
+            kwargs.update({param.name: value})
+        return depends.dependency(**kwargs)
