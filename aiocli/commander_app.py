@@ -26,7 +26,7 @@ __all__ = (
 from .helpers import iscoroutinefunction
 from .logger import logger
 
-CommandHandler = Callable[..., Union[Callable[[Any], int], Coroutine[Any, Any, int]]]
+CommandHandler = Callable[..., Union[Callable[[Any], Optional[int]], Coroutine[Any, Any, Optional[int]]]]
 
 
 class _Depends:
@@ -134,8 +134,14 @@ class Application:
 
     async def __call__(self, args: List[str]) -> int:
         command_name = args[0] if len(args) > 0 else ''
-        if command_name not in self._parsers or command_name in ['-h', '--help']:
-            self._parser.print_help()
+        if command_name in ['-h', '--help', '--version']:
+            try:
+                _ = self._parser.parse_args([command_name])
+            except SystemExit as err:
+                self._exit_code = err.code
+        elif command_name not in self._parsers:
+            self._exit_code = 1
+            raise ValueError('Missing command')
         else:
             if self._deprecated:
                 logger.warning('Executing a deprecated command...')
@@ -145,9 +151,10 @@ class Application:
             kwargs = await self._resolve_command_handler_kwargs(handler, args)  # type: ignore
             await self._execute_command_middleware(self._middleware, cmd, kwargs)
             try:
-                self._exit_code = await self._execute_command_handler(cmd.handler, kwargs)
+                exit_code = await self._execute_command_handler(cmd.handler, kwargs)
             except BaseException as err:
-                self._exit_code = await self._execute_command_exception_handler(err, cmd, kwargs)
+                exit_code = await self._execute_command_exception_handler(err, cmd, kwargs)  # type: ignore
+            self._exit_code = self._exit_code if exit_code is None else exit_code
         return self._exit_code
 
     def include_router(self, router: 'Application') -> None:
@@ -333,7 +340,12 @@ class Application:
             return await handler(**kwargs)  # type: ignore
         return handler(**kwargs)  # type: ignore
 
-    async def _execute_command_exception_handler(self, err: BaseException, cmd: Command, kwargs: Dict[str, Any]) -> int:
+    async def _execute_command_exception_handler(
+        self,
+        err: BaseException,
+        cmd: Command,
+        kwargs: Dict[str, Any],
+    ) -> Optional[int]:
         typ = type(err)
         if typ not in self._exception_handlers:
             raise err
@@ -348,7 +360,5 @@ class Application:
                 ],
             )
         if iscoroutinefunction(exception_handler):
-            exit_code = await exception_handler(err, cmd, kwargs)  # type: ignore
-        else:
-            exit_code = exception_handler(err, cmd, kwargs)
-        return self._exit_code if exit_code is None else exit_code
+            return await exception_handler(err, cmd, kwargs)  # type: ignore
+        return exception_handler(err, cmd, kwargs)  # type: ignore

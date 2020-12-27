@@ -82,8 +82,9 @@ def test_application_specific_exit_code() -> None:
 
 
 @pytest.mark.asyncio
-async def test_application_print_help_and_return_exit_code_0_when_command_not_found() -> None:
-    assert await Application().__call__([]) == 0
+async def test_application_fails_when_command_not_found() -> None:
+    with pytest.raises(ValueError):
+        await Application().__call__([])
 
 
 @pytest.mark.asyncio
@@ -93,7 +94,7 @@ async def test_application_print_help_and_return_exit_code_0_when_command_is(com
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('command_name', ['-v', '--version'])
+@pytest.mark.parametrize('command_name', ['--version'])
 async def test_application_print_version_and_return_exit_code_0_when_command_is_(command_name: str) -> None:
     assert await Application().__call__([command_name]) == 0
 
@@ -129,7 +130,7 @@ async def test_application_execute_exception_handler_and_return_specific_exit_co
         return 3
 
     @app.command(name='test')
-    def handle(_: dict) -> int:
+    def handle() -> Optional[int]:
         raise ValueError('Test')
 
     assert await app.__call__(['test']) == 3
