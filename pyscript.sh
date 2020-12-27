@@ -26,8 +26,8 @@ _version() {
 }
 
 _install() {
-  pip3 uninstall -y uuid # For avoiding Python 3.9 issues
-  pip3 install -r requirements-dev.txt
+  python3 -m pip uninstall -y uuid # For avoiding Python 3.9 issues
+  python3 -m pip install -r requirements-dev.txt
   pre-commit install --hook-type commit-msg || true
 }
 
