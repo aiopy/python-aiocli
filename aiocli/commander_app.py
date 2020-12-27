@@ -7,9 +7,10 @@ from typing import (
     Coroutine,
     Dict,
     List,
-    NamedTuple,
     Optional,
+    Sequence,
     Tuple,
+    Type,
     Union,
 )
 
@@ -23,6 +24,7 @@ __all__ = (
 )
 
 from .helpers import iscoroutinefunction
+from .logger import logger
 
 CommandHandler = Callable[..., Union[Callable[[Any], int], Coroutine[Any, Any, int]]]
 
@@ -36,11 +38,26 @@ def Depends(dependency: Callable[..., Any]) -> Any:
     return _Depends(dependency=dependency)
 
 
-class Command(NamedTuple):
+class Command:
     name: str
     handler: CommandHandler
     positionals: List[Tuple[str, Dict[str, Any]]]
     optionals: List[Tuple[str, Dict[str, Any]]]
+    deprecated: Optional[bool] = None
+
+    def __init__(
+        self,
+        name: str,
+        handler: CommandHandler,
+        positionals: List[Tuple[str, Dict[str, Any]]],
+        optionals: List[Tuple[str, Dict[str, Any]]],
+        deprecated: Optional[bool] = None,
+    ) -> None:
+        self.name = name
+        self.handler = handler  # type: ignore
+        self.positionals = positionals
+        self.optionals = optionals
+        self.deprecated = deprecated
 
 
 def command(
@@ -48,67 +65,101 @@ def command(
     handler: CommandHandler,
     positionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
     optionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
+    deprecated: Optional[bool] = None,
 ) -> Command:
-    return Command(name=name, handler=handler, positionals=positionals or [], optionals=optionals or [])
+    return Command(
+        name=name,
+        handler=handler,
+        positionals=positionals or [],
+        optionals=optionals or [],
+        deprecated=deprecated,
+    )
 
 
-AppSignal = Callable[['Application'], Union[None, Awaitable[None]]]
+CommandMiddleware = Callable[[Command, Dict[str, Any]], Union[Callable[[Any], None], Coroutine[Any, Any, None]]]
+
+CommandExceptionHandler = Callable[
+    [BaseException, Command, Dict[str, Any]], Union[Callable[[Any], Optional[int]], Coroutine[Any, Any, Optional[int]]]
+]
+
+CommandHook = Callable[['Application'], Union[None, Awaitable[None]]]
 
 
 class Application:
     _parser: ArgumentParser
     _parsers: Dict[str, ArgumentParser]
+    _debug: bool
     _commands: Dict[str, Command]
     _exit_code: int
-    _on_startup: List[AppSignal]
-    _on_shutdown: List[AppSignal]
-    _on_cleanup: List[AppSignal]
+    _middleware: List[CommandMiddleware]
+    _exception_handlers: Dict[Type[BaseException], CommandExceptionHandler]
+    _on_startup: List[CommandHook]
+    _on_shutdown: List[CommandHook]
+    _on_cleanup: List[CommandHook]
+    _deprecated: bool
 
     def __init__(
         self,
-        commands: Optional[List[Command]] = None,
         *,
-        name: str = 'aiocli.commander',
+        debug: bool = False,
+        commands: Optional[Sequence[Command]] = None,
+        title: str = 'aiocli.commander',
         description: str = '',
         version: str = 'unknown',
-        on_startup: Optional[List[AppSignal]] = None,
-        on_shutdown: Optional[List[AppSignal]] = None,
-        on_cleanup: Optional[List[AppSignal]] = None,
+        default_exit_code: int = 0,
+        middleware: Optional[Sequence[CommandMiddleware]] = None,
+        exception_handlers: Optional[Dict[Type[BaseException], CommandExceptionHandler]] = None,
+        on_startup: Optional[Sequence[CommandHook]] = None,
+        on_shutdown: Optional[Sequence[CommandHook]] = None,
+        on_cleanup: Optional[Sequence[CommandHook]] = None,
+        deprecated: Optional[bool] = None,
     ) -> None:
         self._parser = ArgumentParser(
             description=description,
-            prog=name,
+            prog=title,
             formatter_class=RawTextHelpFormatter,
         )
         self._parser.add_argument('--version', action='version', version=version)
         self._parsers = {}
+        self._debug = debug
         self._commands = {}
-        self.add_commands(commands or [])
-        self._exit_code = 0
-        self._on_startup = on_startup if on_startup else []
-        self._on_shutdown = on_shutdown if on_shutdown else []
-        self._on_cleanup = on_cleanup if on_cleanup else []
+        self.add_commands([] if commands is None else commands)
+        self._exit_code = default_exit_code
+        self._middleware = [] if middleware is None else list(middleware)
+        self._exception_handlers = {} if exception_handlers is None else exception_handlers
+        self._on_startup = [] if on_startup is None else list(on_startup)
+        self._on_shutdown = [] if on_shutdown is None else list(on_shutdown)
+        self._on_cleanup = [] if on_cleanup is None else list(on_cleanup)
+        self._deprecated = bool(deprecated)
 
     async def __call__(self, args: List[str]) -> int:
         command_name = args[0] if len(args) > 0 else ''
         if command_name not in self._parsers or command_name in ['-h', '--help']:
             self._parser.print_help()
-            self._exit_code = 0
         else:
-            handler = self._commands[command_name].handler
+            if self._deprecated:
+                logger.warning('Executing a deprecated command...')
+            cmd = self._commands[command_name]
+            handler = cmd.handler
             args = vars(self._parsers[command_name].parse_args(args[1:]))  # type: ignore
             kwargs = await self._resolve_command_handler_kwargs(handler, args)  # type: ignore
-            if iscoroutinefunction(handler):
-                self._exit_code = await handler(**kwargs)  # type: ignore
-            else:
-                self._exit_code = handler(**kwargs)  # type: ignore
+            await self._execute_command_middleware(self._middleware, cmd, kwargs)
+            try:
+                self._exit_code = await self._execute_command_handler(cmd.handler, kwargs)
+            except BaseException as err:
+                self._exit_code = await self._execute_command_exception_handler(err, cmd, kwargs)
         return self._exit_code
 
     def include_router(self, router: 'Application') -> None:
         for name, cmd in router._commands.items():
+            if cmd.deprecated is None:
+                cmd.deprecated = self._deprecated
             self._commands[name] = cmd
             self._parsers[name] = router._parsers[name]
             self._update_parser_description(name)
+        for middleware in router._middleware:
+            self._middleware.append(middleware)
+        self._exception_handlers.update(router._exception_handlers)
         for on_startup in router._on_startup:
             self._on_startup.append(on_startup)
         for on_shutdown in router._on_shutdown:
@@ -122,6 +173,7 @@ class Application:
         *,
         positionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
         optionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
+        deprecated: Optional[bool] = None,
     ) -> Callable[[CommandHandler], CommandHandler]:
         def decorator(handler: CommandHandler) -> CommandHandler:
             self._add_command(
@@ -130,18 +182,46 @@ class Application:
                     handler=handler,
                     positionals=positionals or [],
                     optionals=optionals or [],
+                    deprecated=deprecated,
                 )
             )
             return handler
 
         return decorator
 
-    def add_commands(self, commands: List[Command]) -> None:
+    def add_commands(self, commands: Sequence[Command]) -> None:
         for cmd in commands:
             self._add_command(cmd)
 
     def get_command(self, name: str) -> Optional[Command]:
         return self._commands.get(name, None)
+
+    def middleware(self) -> Callable[[CommandMiddleware], CommandMiddleware]:
+        def decorator(middleware: CommandMiddleware) -> CommandMiddleware:
+            self.add_middleware([middleware])
+            return middleware
+
+        return decorator
+
+    def add_middleware(self, middleware: Sequence[CommandMiddleware]) -> None:
+        for middleware_ in middleware:
+            self._middleware.append(middleware_)
+
+    def exception_handler(
+        self,
+        typ: Type[BaseException],
+    ) -> Callable[[CommandExceptionHandler], CommandExceptionHandler]:
+        def decorator(handler: CommandExceptionHandler) -> CommandExceptionHandler:
+            self.add_exception_handlers({typ: handler})
+            return handler
+
+        return decorator
+
+    def add_exception_handlers(self, handlers: Dict[Type[BaseException], CommandExceptionHandler]) -> None:
+        self._exception_handlers.update(handlers)
+
+    def get_exception_handler(self, typ: Type[BaseException]) -> Optional[CommandExceptionHandler]:
+        return self._exception_handlers.get(typ, None)
 
     @property
     def parser(self) -> ArgumentParser:
@@ -155,36 +235,61 @@ class Application:
         self._parser.exit(status=self._exit_code)
 
     @property
-    def on_startup(self) -> List[AppSignal]:
+    def on_startup(self) -> List[CommandHook]:
         return self._on_startup
 
     async def startup(self) -> None:
-        await self._execute_app_signals(self.on_startup)
+        await self._execute_command_hooks(self.on_startup)
 
     @property
-    def on_shutdown(self) -> List[AppSignal]:
+    def on_shutdown(self) -> List[CommandHook]:
         return self._on_shutdown
 
     async def shutdown(self) -> None:
-        await self._execute_app_signals(self._on_shutdown)
+        await self._execute_command_hooks(self._on_shutdown)
 
     @property
-    def on_cleanup(self) -> List[AppSignal]:
+    def on_cleanup(self) -> List[CommandHook]:
         return self._on_cleanup
 
     async def cleanup(self) -> None:
-        await self._execute_app_signals(self._on_cleanup)
+        await self._execute_command_hooks(self._on_cleanup)
 
     def _add_command(self, cmd: Command) -> None:
+        if cmd.deprecated is None:
+            cmd.deprecated = self._deprecated
         self._commands[cmd.name] = cmd
         parser = ArgumentParser(prog=cmd.name)
         _ = [parser.add_argument(arg[0], **arg[1]) for arg in cmd.positionals + cmd.optionals]
         self._parsers[cmd.name] = parser
         self._update_parser_description(cmd.name)
 
-    async def _execute_app_signals(self, app_signals: List[AppSignal]) -> None:
-        for app_signal in app_signals:
-            _ = await app_signal(self) if iscoroutinefunction(app_signal) else app_signal(self)  # type: ignore
+    async def _execute_command_middleware(
+        self,
+        command_middleware: List[CommandMiddleware],
+        cmd: Command,
+        kwargs: Dict[str, Any],
+    ) -> None:
+        for handler in command_middleware:
+            if self._debug:
+                logger.debug(
+                    msg='Executing middleware {} with {}({})...',
+                    args=[
+                        type(handler),
+                        type(cmd),
+                        ', '.join(['{}={}'.format(key, val) for key, val in kwargs.items()]),
+                    ],
+                )
+            _ = await handler(cmd, kwargs) if iscoroutinefunction(handler) else handler(cmd, kwargs)  # type: ignore
+
+    async def _execute_command_hooks(self, command_hooks: List[CommandHook]) -> None:
+        for hook in command_hooks:
+            if self._debug:
+                logger.debug(
+                    msg='Executing hook {}...',
+                    args=[type(hook)],
+                )
+            _ = await hook(self) if iscoroutinefunction(hook) else hook(self)  # type: ignore
 
     def _update_parser_description(self, name: str) -> None:
         self._parser.description = '{0}{1}\n'.format(self._parser.description, name)
@@ -214,4 +319,36 @@ class Application:
             if isinstance(value, _Depends):
                 value = await cls._resolve_command_handler_depends_args(value)
             kwargs.update({param.name: value})
+        if iscoroutinefunction(depends.dependency):
+            return await depends.dependency(**kwargs)
         return depends.dependency(**kwargs)
+
+    async def _execute_command_handler(self, handler: CommandHandler, kwargs: Dict[str, Any]) -> int:
+        if self._debug:
+            logger.debug(
+                msg='Executing command handler {} with {}({})...',
+                args=[type(handler), ', '.join(['{}={}'.format(key, val) for key, val in kwargs.items()])],
+            )
+        if iscoroutinefunction(handler):
+            return await handler(**kwargs)  # type: ignore
+        return handler(**kwargs)  # type: ignore
+
+    async def _execute_command_exception_handler(self, err: BaseException, cmd: Command, kwargs: Dict[str, Any]) -> int:
+        typ = type(err)
+        if typ not in self._exception_handlers:
+            raise err
+        exception_handler = self._exception_handlers[typ]
+        if self._debug:
+            logger.debug(
+                msg='Executing exception handler {} with {}({})...',
+                args=[
+                    type(exception_handler),
+                    type(err),
+                    ', '.join(['{}={}'.format(key, val) for key, val in kwargs.items()]),
+                ],
+            )
+        if iscoroutinefunction(exception_handler):
+            exit_code = await exception_handler(err, cmd, kwargs)  # type: ignore
+        else:
+            exit_code = exception_handler(err, cmd, kwargs)
+        return self._exit_code if exit_code is None else exit_code

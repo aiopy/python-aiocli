@@ -1,8 +1,9 @@
+from typing import Any, Dict, Optional
 from unittest.mock import Mock
 
 import pytest
 
-from aiocli.commander_app import Application, command
+from aiocli.commander_app import Application, Command, command
 
 
 def test_application_include_router() -> None:
@@ -11,7 +12,7 @@ def test_application_include_router() -> None:
         'on_shutdown': [Mock()],
         'on_cleanup': [Mock()],
     }
-    app = Application(name='root', **root_hooks)
+    app = Application(title='root', **root_hooks)
 
     @app.command(name='one-of-root')
     def handle(_: dict) -> int:
@@ -22,7 +23,7 @@ def test_application_include_router() -> None:
         'on_shutdown': [Mock()],
         'on_cleanup': [Mock()],
     }
-    router = Application(name='child', **router_hooks)
+    router = Application(title='child', **router_hooks)
 
     @router.command(name='one-of-child')
     def handle(_: dict) -> int:
@@ -76,6 +77,10 @@ def test_application_default_exit_code() -> None:
     assert Application().exit_code == 0
 
 
+def test_application_specific_exit_code() -> None:
+    assert Application(default_exit_code=1).exit_code == 1
+
+
 @pytest.mark.asyncio
 async def test_application_print_help_and_return_exit_code_0_when_command_not_found() -> None:
     assert await Application().__call__([]) == 0
@@ -113,3 +118,18 @@ async def test_application_execute_sync_command_and_return_exit_code_0() -> None
         return 0
 
     assert await app.__call__(['test']) == 0
+
+
+@pytest.mark.asyncio
+async def test_application_execute_exception_handler_and_return_specific_exit_code() -> None:
+    app = Application()
+
+    @app.exception_handler(typ=ValueError)
+    def exception_handler(err: ValueError, cmd: Command, kwargs: Dict[str, Any]) -> Optional[int]:
+        return 3
+
+    @app.command(name='test')
+    def handle(_: dict) -> int:
+        raise ValueError('Test')
+
+    assert await app.__call__(['test']) == 3
