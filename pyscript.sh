@@ -33,6 +33,7 @@ _install() {
 
 _build() {
   python3 setup.py sdist bdist_wheel
+  python3 -m mkdocs build
 }
 
 _deploy() {
