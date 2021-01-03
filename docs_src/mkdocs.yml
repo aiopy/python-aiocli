@@ -1,6 +1,6 @@
 site_name: aiocli
 site_description: Simple and lightweight async console runner
-site_url: https://github.com/ticdenis/python-aiocli
+site_url: https://ticdenis.github.io/python-aiocli/
 theme:
   name: material
   palette:

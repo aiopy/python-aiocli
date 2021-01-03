@@ -14,7 +14,7 @@ pip install aiocli
 
 ## Documentation
 
-- Visit [aiocli docs](https://ticdenis.github.com/python-aiocli/).
+- Visit [aiocli docs](https://ticdenis.github.io/python-aiocli/).
 
 ## Usage
 
