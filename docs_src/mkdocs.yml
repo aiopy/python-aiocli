@@ -18,7 +18,7 @@ repo_url: https://github.com/ticdenis/python-aiocli
 nav:
   - aiocli: index.md
   - Languages:
-      - en: /
+      - en: index.md
   - features.md
   - Tutorial - User Guide:
       - tutorial/intro.md

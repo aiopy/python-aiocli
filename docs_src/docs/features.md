@@ -32,9 +32,9 @@
 
 - in [Visual Studio Code](https://code.visualstudio.com):
 
-![Visual Studio Code editor support](/imgs/vscode-completion.png)
+![Visual Studio Code editor support](https://ticdenis.github.io/python-aiocli/imgs/vscode-completion.png)
 
 - in [PyCharm](https://www.jetbrains.com/pycharm/):
 
-![PyCharm editor support](/imgs/pycharm-completion.png)
+![PyCharm editor support](https://ticdenis.github.io/python-aiocli/imgs/pycharm-completion.png)
 
