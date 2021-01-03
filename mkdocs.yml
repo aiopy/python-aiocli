@@ -1,0 +1,38 @@
+site_name: aiocli
+site_description: Simple and lightweight async console runner
+site_url: https://github.com/ticdenis/python-aiocli
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: red
+      accent: pink
+  features:
+    - search.suggest
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github-alt
+  language: en
+repo_name: ticdenis/python-aiocli
+repo_url: https://github.com/ticdenis/python-aiocli
+nav:
+  - aiocli: index.md
+  - Languages:
+      - en: /
+  - features.md
+  - Tutorial - User Guide:
+      - tutorial/intro.md
+  - Advanced User Guide:
+      - advanced/intro.md
+  - release-notes.md
+extra:
+  social:
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/denisnavarroalcaide
+    - icon: fontawesome/brands/github
+      link: https://github.com/ticdenis
+  alternate:
+    - link: /
+      name: en - English
+  generator: false
+copyright: Copyright &copy; 2020 - 2021

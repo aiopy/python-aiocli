@@ -1,24 +1,26 @@
-# Async cli client/commander framework
+# AIOCLI
 
-aiocli is a Python library for simple and lightweight async console runner.
+A modern, lightweight, async console runner for building CLIs with Python 3.6+ based on standard Python's [argparse module](https://docs.python.org/3/library/argparse.html) and [type hints](https://docs.python.org/3/library/typing.html) and highly inspired by [AIOHTTP](https://github.com/aio-libs/aiohttp) and [FastApi](https://github.com/tiangolo/fastapi).
 
-Full compatibility with argparse module and highly inspired by aiohttp module.
+Key Features:
+
+* **Native-based**: Based on (and fully compatible with) Python's argparse module.
+* **Async support**: Handle commands completely async thinking in smaller and larger apps.
+* **Test support**: Designed to be easy to execute and test.
+
+## Requirements
+
+- Python 3.6+
 
 ## Installation
 
-Use the package manager [pip](https://pypi.org/project/aiocli/) to install aiocli.
-
-```bash
+```shell
 pip install aiocli
 ```
 
-## Documentation
+## Example
 
-- Visit [aiocli docs](https://ticdenis.github.com/python-aiocli/).
-
-## Usage
-
-```python
+```Python
 from logging import getLogger, Logger, StreamHandler
 from os import getenv
 
@@ -57,16 +59,6 @@ async def handle_division(a: float, b: float, logger: Logger = Depends(_get_logg
 if __name__ == '__main__':
     run_app(app)
 ```
-
-## Requirements
-
-- Python >= 3.6
-
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-Please make sure to update tests as appropriate.
 
 ## License
 

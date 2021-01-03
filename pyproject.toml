@@ -1,12 +1,12 @@
 [metadata]
 name = "aiocli"
-version = "1.4.1"
+version = "1.4.2"
 description = "Simple and lightweight async console runner."
 license = "MIT"
 authors = ["ticdenis <denisnavarroalcaide@outlook.es>"]
 readme = "README.md"
 repository = "https://github.com/ticdenis/python-aiocli"
-documentation = "https://github.com/ticdenis/python-aiocli/blob/master/README.md"
+documentation = "https://ticdenis.github.com/python-aiocli"
 keywords = ["asyncio", "async", "aio", "cli", "console"]
 classifiers = ["Topic :: Software Development :: Libraries :: Python Modules"]
 include = ["LICENSE", "README.md"]

@@ -30,12 +30,13 @@ CommandHandler = Callable[..., Union[Callable[[Any], Optional[int]], Coroutine[A
 
 
 class _Depends:
-    def __init__(self, dependency: Callable[..., Any]) -> None:
+    def __init__(self, dependency: Callable[..., Any], cache: bool) -> None:
         self.dependency = dependency
+        self.cache = cache
 
 
-def Depends(dependency: Callable[..., Any]) -> Any:
-    return _Depends(dependency=dependency)
+def Depends(dependency: Callable[..., Any], cache: bool = True) -> Any:
+    return _Depends(dependency=dependency, cache=cache)
 
 
 class Command:
@@ -43,7 +44,7 @@ class Command:
     handler: CommandHandler
     positionals: List[Tuple[str, Dict[str, Any]]]
     optionals: List[Tuple[str, Dict[str, Any]]]
-    deprecated: Optional[bool] = None
+    deprecated: Optional[bool]
 
     def __init__(
         self,
@@ -97,6 +98,7 @@ class Application:
     _on_shutdown: List[CommandHook]
     _on_cleanup: List[CommandHook]
     _deprecated: bool
+    _dependencies_cached: Dict[Any, Any]
 
     def __init__(
         self,
@@ -131,6 +133,7 @@ class Application:
         self._on_shutdown = [] if on_shutdown is None else list(on_shutdown)
         self._on_cleanup = [] if on_cleanup is None else list(on_cleanup)
         self._deprecated = bool(deprecated)
+        self._dependencies_cached = {}
 
     async def __call__(self, args: List[str]) -> int:
         command_name = args[0] if len(args) > 0 else ''
@@ -202,6 +205,9 @@ class Application:
 
     def get_command(self, name: str) -> Optional[Command]:
         return self._commands.get(name, None)
+
+    def get_parser(self, command_name: str) -> Optional[ArgumentParser]:
+        return self._parsers.get(command_name, None)
 
     def middleware(self) -> Callable[[CommandMiddleware], CommandMiddleware]:
         def decorator(middleware: CommandMiddleware) -> CommandMiddleware:
@@ -301,8 +307,7 @@ class Application:
     def _update_parser_description(self, name: str) -> None:
         self._parser.description = '{0}{1}\n'.format(self._parser.description, name)
 
-    @classmethod
-    async def _resolve_command_handler_kwargs(cls, call: CommandHandler, cmd_args: Dict[str, Any]) -> Dict[str, Any]:
+    async def _resolve_command_handler_kwargs(self, call: CommandHandler, cmd_args: Dict[str, Any]) -> Dict[str, Any]:
         kwargs = {}
         for param in signature(call).parameters.values():
             name: str = param.name
@@ -311,24 +316,30 @@ class Application:
                 kwargs.update({name: value})
                 continue
             if name not in kwargs:
-                value = param.default
-                if isinstance(value, _Depends):
-                    value = await cls._resolve_command_handler_depends_args(value)
+                value = await self._resolve_or_retrieve_from_cache_dependency(param.default)
                 kwargs.update({name: value})
                 continue
         return kwargs
 
-    @classmethod
-    async def _resolve_command_handler_depends_args(cls, depends: _Depends) -> Any:
+    async def _resolve_command_handler_depends_args(self, depends: _Depends) -> Any:
         kwargs = {}
         for param in signature(depends.dependency).parameters.values():
-            value: Any = param.default
-            if isinstance(value, _Depends):
-                value = await cls._resolve_command_handler_depends_args(value)
+            value = await self._resolve_or_retrieve_from_cache_dependency(param.default)
             kwargs.update({param.name: value})
         if iscoroutinefunction(depends.dependency):
             return await depends.dependency(**kwargs)
         return depends.dependency(**kwargs)
+
+    async def _resolve_or_retrieve_from_cache_dependency(self, value: Any) -> Any:
+        if isinstance(value, _Depends):
+            if value.cache and value.dependency in self._dependencies_cached:
+                new_value = self._dependencies_cached[value.dependency]
+            else:
+                new_value = await self._resolve_command_handler_depends_args(value)
+            if value.cache:
+                self._dependencies_cached.update({value.dependency: new_value})
+            value = new_value
+        return value
 
     async def _execute_command_handler(self, handler: CommandHandler, kwargs: Dict[str, Any]) -> int:
         if self._debug:
