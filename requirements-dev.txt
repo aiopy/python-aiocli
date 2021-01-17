@@ -1,7 +1,7 @@
 -r requirements.txt
 autoflake>=1.4
 bandit>=1.7.0
-black>=20.8b1
+black
 commitizen>=2.13.0
 isort>=5.7.0
 liccheck>=0.4.9
