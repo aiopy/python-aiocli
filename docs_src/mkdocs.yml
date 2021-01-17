@@ -12,7 +12,6 @@ theme:
     - search.highlight
   icon:
     repo: fontawesome/brands/github-alt
-  language: en
 repo_name: ticdenis/python-aiocli
 repo_url: https://github.com/ticdenis/python-aiocli
 nav:
@@ -36,3 +35,8 @@ extra:
       name: en - English
   generator: false
 copyright: Copyright &copy; 2020 - 2021
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.snippets

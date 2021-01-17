@@ -15,12 +15,12 @@ Key Features:
 ## Installation
 
 ```shell
-pip install aiocli
+python3 -m pip install aiocli
 ```
 
 ## Example
 
-```Python
+```python hl_lines="6 37"
 from logging import getLogger, Logger, StreamHandler
 from os import getenv
 

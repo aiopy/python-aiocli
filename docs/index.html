@@ -14,7 +14,7 @@
         <link rel="canonical" href="https://ticdenis.github.io/python-aiocli/">
       
       <link rel="shortcut icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.2.3">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.2.4">
     
     
       
@@ -22,10 +22,10 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.3b61ea93.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.15aa0b43.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.39b8e14a.min.css">
+        <link rel="stylesheet" href="assets/stylesheets/palette.75751829.min.css">
         
       
     
@@ -502,47 +502,47 @@
 <li>Python 3.6+</li>
 </ul>
 <h2 id="installation">Installation</h2>
-<pre><code class="language-shell">pip install aiocli
-</code></pre>
+<div class="highlight"><pre><span></span><code>python3 -m pip install aiocli
+</code></pre></div>
 <h2 id="example">Example</h2>
-<pre><code class="language-Python">from logging import getLogger, Logger, StreamHandler
-from os import getenv
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">logging</span> <span class="kn">import</span> <span class="n">getLogger</span><span class="p">,</span> <span class="n">Logger</span><span class="p">,</span> <span class="n">StreamHandler</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">getenv</span>
 
-from aiocli.commander import run_app, Application, Depends
+<span class="kn">from</span> <span class="nn">aiocli.commander</span> <span class="kn">import</span> <span class="n">run_app</span><span class="p">,</span> <span class="n">Application</span><span class="p">,</span> <span class="n">Depends</span>
 
-app = Application()
+<span class="hll"><span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">()</span>
+</span>
+<span class="k">def</span> <span class="nf">_get_envs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;LOGGER_NAME&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;LOGGER_NAME&#39;</span><span class="p">,</span> <span class="s1">&#39;example_app&#39;</span><span class="p">)),</span>
+        <span class="s1">&#39;LOGGER_LEVEL&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;LOGGER_LEVEL&#39;</span><span class="p">,</span> <span class="s1">&#39;INFO&#39;</span><span class="p">)),</span>
+    <span class="p">}</span>
 
-def _get_envs() -&gt; dict[str, str]:
-    return {
-        'LOGGER_NAME': str(getenv('LOGGER_NAME', 'example_app')),
-        'LOGGER_LEVEL': str(getenv('LOGGER_LEVEL', 'INFO')),
-    }
+<span class="k">def</span> <span class="nf">_get_logger</span><span class="p">(</span><span class="n">envs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">_get_envs</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">Logger</span><span class="p">:</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="n">envs</span><span class="p">[</span><span class="s1">&#39;LOGGER_NAME&#39;</span><span class="p">])</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">envs</span><span class="p">[</span><span class="s1">&#39;LOGGER_LEVEL&#39;</span><span class="p">])</span>
+    <span class="n">handler</span> <span class="o">=</span> <span class="n">StreamHandler</span><span class="p">()</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">logger</span>
 
-def _get_logger(envs: dict[str, str] = Depends(_get_envs)) -&gt; Logger:
-    logger = getLogger(envs['LOGGER_NAME'])
-    logger.setLevel(envs['LOGGER_LEVEL'])
-    handler = StreamHandler()
-    logger.addHandler(handler)
-    return logger
+<span class="nd">@app</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;greet:to&#39;</span><span class="p">,</span> <span class="n">positionals</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;--name&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;World!&#39;</span><span class="p">})])</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">handle_greeting</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">_get_logger</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hello </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span>
 
-@app.command(name='greet:to', positionals=[('--name', {'default': 'World!'})])
-async def handle_greeting(name: str, logger: Logger = Depends(_get_logger)) -&gt; int:
-    logger.info(f'Hello {name}')
-    return 0
+<span class="nd">@app</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;div&#39;</span><span class="p">,</span> <span class="n">optionals</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;--a&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">}),</span> <span class="p">(</span><span class="s1">&#39;--b&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">})])</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">handle_division</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">logger</span><span class="p">:</span> <span class="n">Logger</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">_get_logger</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Result </span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1"> / </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="p">(</span><span class="n">a</span> <span class="o">/</span> <span class="n">b</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Error: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
 
-@app.command(name='div', optionals=[('--a', {'type': float}), ('--b', {'type': float})])
-async def handle_division(a: float, b: float, logger: Logger = Depends(_get_logger)) -&gt; int:
-    try:
-        logger.info(f'Result {a} / {b} = {(a / b)}')
-        return 0
-    except BaseException as err:
-        logger.error(f'Error: {err}')
-        return 1
-
-# python3 main.py &lt;command&gt; &lt;positionals&gt; &lt;optionals&gt;
-if __name__ == '__main__':
-    run_app(app)
-</code></pre>
+<span class="c1"># python3 main.py &lt;command&gt; &lt;positionals&gt; &lt;optionals&gt;</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+<span class="hll">    <span class="n">run_app</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+</span></code></pre></div>
 <h2 id="license">License</h2>
 <p><a href="https://github.com/ticdenis/python-aiocli/blob/master/LICENSE">MIT</a></p>
                 
@@ -637,8 +637,8 @@ if __name__ == '__main__':
       
     </div>
     
-      <script src="assets/javascripts/vendor.08c56446.min.js"></script>
-      <script src="assets/javascripts/bundle.6ced434e.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      <script src="assets/javascripts/vendor.93c04032.min.js"></script>
+      <script src="assets/javascripts/bundle.83e5331e.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({
