@@ -128,6 +128,9 @@ def run_app(
     except (GracefulExit, KeyboardInterrupt):  # pragma: no cover
         pass
     finally:
-        _cancel_tasks(to_cancel=all_tasks(loop=loop), loop=loop)
-        loop.run_until_complete(loop.shutdown_asyncgens())
-        loop.close()
+        if not loop.is_closed():
+            _cancel_tasks(to_cancel=all_tasks(loop=loop), loop=loop)
+        if not loop.is_closed():
+            loop.run_until_complete(loop.shutdown_asyncgens())
+        if not loop.is_closed():
+            loop.close()
