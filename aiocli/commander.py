@@ -120,7 +120,8 @@ def run_app(
     loop: Optional[AbstractEventLoop] = None,
     handle_signals: bool = True,
     argv: Optional[List[str]] = None,
-    exit_code: bool = True
+    exit_code: bool = True,
+    close_loop: bool = True,
 ) -> None:
     loop = loop or get_event_loop()
     try:
@@ -132,5 +133,5 @@ def run_app(
             _cancel_tasks(to_cancel=all_tasks(loop=loop), loop=loop)
         if not loop.is_closed():
             loop.run_until_complete(loop.shutdown_asyncgens())
-        if not loop.is_closed():
+        if close_loop and not loop.is_closed():
             loop.close()
