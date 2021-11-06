@@ -3,7 +3,7 @@ import signal
 import sys
 from asyncio import gather, get_event_loop, iscoroutine
 from asyncio.events import AbstractEventLoop
-from typing import Any, Awaitable, List, Optional, Set, Union, cast
+from typing import Any, Awaitable, Callable, List, Optional, Set, Union, cast
 
 from aiocli.commander_app import Application, Command, Depends, command
 
@@ -15,6 +15,8 @@ __all__ = (
     'Depends',
     # commander
     'run_app',
+    'ApplicationParser',
+    'ApplicationReturn',
 )
 
 from aiocli.helpers import all_tasks
@@ -114,6 +116,11 @@ async def _run_app(
         await runner.cleanup()
 
 
+ApplicationParser = Callable[..., Optional[List[str]]]
+
+ApplicationReturn = Union[int, None, Callable[..., Optional[int]]]
+
+
 def run_app(
     app: Union[Application, Awaitable[Application]],
     *,
@@ -122,16 +129,29 @@ def run_app(
     argv: Optional[List[str]] = None,
     exit_code: bool = True,
     close_loop: bool = True,
-) -> None:
-    loop = loop or get_event_loop()
-    try:
-        loop.run_until_complete(_run_app(app, loop=loop, handle_signals=handle_signals, argv=argv, exit_code=exit_code))
-    except (GracefulExit, KeyboardInterrupt):  # pragma: no cover
-        pass
-    finally:
-        if not loop.is_closed():
-            _cancel_tasks(to_cancel=all_tasks(loop=loop), loop=loop)
-        if not loop.is_closed():
-            loop.run_until_complete(loop.shutdown_asyncgens())
-        if close_loop and not loop.is_closed():
-            loop.close()
+    parser: Optional[ApplicationParser] = None
+) -> ApplicationReturn:
+    def wrapper(*args, **kwargs) -> Optional[int]:  # type: ignore
+        loop_ = loop or get_event_loop()
+        try:
+            loop_.run_until_complete(
+                _run_app(
+                    app,
+                    loop=loop_,
+                    handle_signals=handle_signals,
+                    argv=argv if parser is None else parser(*args, **kwargs),
+                    exit_code=exit_code,
+                )
+            )
+        except (GracefulExit, KeyboardInterrupt):  # pragma: no cover
+            pass
+        finally:
+            if not loop_.is_closed():
+                _cancel_tasks(to_cancel=all_tasks(loop=loop_), loop=loop_)
+            if not loop_.is_closed():
+                loop_.run_until_complete(loop_.shutdown_asyncgens())
+            if close_loop and not loop_.is_closed():
+                loop_.close()
+        return cast(Application, app).exit_code
+
+    return wrapper() if parser is None else wrapper

@@ -31,7 +31,7 @@ _install() {
 }
 
 _build() {
-  python3 setup.py sdist bdist_wheel
+#  python3 setup.py sdist bdist_wheel
   python3 -m mkdocs build -f ./docs_src/mkdocs.yml -d ./../docs
 }
 
@@ -95,6 +95,7 @@ export PYTHONPATH=.
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONUNBUFFERED=1
 
+# shellcheck disable=SC2269
 case "$function" in
 -h | --help) function=help ;;
 -v | --version) function=version ;;

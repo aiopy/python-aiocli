@@ -1,6 +1,6 @@
 [metadata]
 name = "aiocli"
-version = "1.5.1"
+version = "1.5.2"
 description = "Simple and lightweight async console runner."
 license = "MIT"
 authors = ["ticdenis <denisnavarroalcaide@outlook.es>"]
@@ -13,7 +13,7 @@ include = ["LICENSE", "README.md"]
 
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools>=56.0.0", "wheel>=0.36.2"]
+requires = ["setuptools==58.5.3", "wheel==0.36.2"]
 
 [tool.black]
 include = '\.pyi?$'
@@ -24,7 +24,7 @@ skip-string-normalization = true
 profile = "black"
 
 [tool.liccheck]
-authorized_licenses = ["MIT", "BSD", "PSF", "Python Software Foundation", "Apache License 2.0", "Apache Software", "LGPL", "Mozilla Public License 2.0 (MPL 2.0)", "MPL 2.0", "GPL", "GNU General Public License (GPL)", "LGPL-2.1-or-later", "GNU Library or Lesser General Public License (LGPL)"]
+authorized_licenses = ["MIT", "BSD", "PSF", "Python Software Foundation", "Apache License 2.0", "Apache Software", "LGPL", "Mozilla Public License 2.0 (MPL 2.0)", "MPL 2.0", "GPL", "GNU General Public License (GPL)", "LGPL-2.1-or-later", "GNU Library or Lesser General Public License (LGPL)", "GNU Lesser General Public License v2 (LGPLv2)", "GNU General Public License v2 (GPLv2)", "Public Domain"]
 unauthorized_licenses = []
 [tool.liccheck.authorized_packages]
 uuid = "1.30"
@@ -33,7 +33,7 @@ filelock = "3.0.12"
 [tool.pylint.master]
 jobs = "0"
 [tool.pylint.messages_control]
-disable = "C0103,C0114,C0115,C0116,C0301,E0239,E1101,E1136,R0902,R0903,R0913,W0212,W0611,W0622,W0703"
+disable = "C0103,C0114,C0115,C0116,C0209,C0301,E0239,E1101,E1136,R0902,R0903,R0913,W0212,W0611,W0622,W0703"
 
 [tool.pytest.ini_options]
 cache_dir = "var/cache/.pytest_cache"

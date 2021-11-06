@@ -17,12 +17,12 @@ repo_url: https://github.com/ticdenis/python-aiocli
 nav:
   - aiocli: index.md
   - Languages:
-      - en: index.md
+      - en: en/
+      - es: es/
   - features.md
-  - Tutorial - User Guide:
-      - tutorial/intro.md
   - Advanced User Guide:
-      - advanced/intro.md
+      - advanced/serverless_support.md
+      - advanced/test_support.md
   - release-notes.md
 extra:
   social:
@@ -31,8 +31,10 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/ticdenis
   alternate:
-    - link: /
+    - link: /en/
       name: en - English
+    - link: /es/
+      name: es - español
   generator: false
 copyright: Copyright &copy; 2020 - 2021
 markdown_extensions:
