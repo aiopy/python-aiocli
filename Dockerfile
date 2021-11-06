@@ -1,4 +1,4 @@
-FROM python:3.6.12 as development
+FROM docker.io/library/python:3.6.15-slim as development
 
 WORKDIR /app
 

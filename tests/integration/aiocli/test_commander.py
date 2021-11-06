@@ -8,11 +8,11 @@ from aiocli.commander_app import Application
 def test_run_app() -> None:
     error_code: Optional[int] = None
     try:
-        app = Application()
+        app = Application(default_exit_code=-1)
 
         @app.command(name='greet:to', positionals=[('--name', {'default': 'World!'})])
-        def handle(args: dict) -> int:
-            return 0 if args['name'] == 'test' else 1
+        def handle(name: str) -> int:
+            return 0 if name == 'test' else 1
 
         run_app(
             app=app,

@@ -29,6 +29,10 @@ from .logger import logger
 CommandHandler = Callable[..., Union[Callable[[Any], Optional[int]], Coroutine[Any, Any, Optional[int]]]]
 
 
+class State:
+    pass
+
+
 class _Depends:
     def __init__(self, dependency: Callable[..., Any], cache: bool) -> None:
         self.dependency = dependency
@@ -99,6 +103,7 @@ class Application:
     _on_cleanup: List[CommandHook]
     _deprecated: bool
     _dependencies_cached: Dict[Any, Any]
+    _state: State
 
     def __init__(
         self,
@@ -115,6 +120,7 @@ class Application:
         on_shutdown: Optional[Sequence[CommandHook]] = None,
         on_cleanup: Optional[Sequence[CommandHook]] = None,
         deprecated: Optional[bool] = None,
+        state: Optional[State] = None,
     ) -> None:
         self._parser = ArgumentParser(
             description=description,
@@ -134,6 +140,7 @@ class Application:
         self._on_cleanup = [] if on_cleanup is None else list(on_cleanup)
         self._deprecated = bool(deprecated)
         self._dependencies_cached = {}
+        self._state = State() if state is None else state
 
     async def __call__(self, args: List[str]) -> int:
         command_name = args[0] if len(args) > 0 else ''

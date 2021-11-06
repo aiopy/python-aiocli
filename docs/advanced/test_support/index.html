@@ -11,14 +11,14 @@
       
       
       
-        <link rel="canonical" href="https://ticdenis.github.io/python-aiocli/tutorial/intro/">
+        <link rel="canonical" href="https://ticdenis.github.io/python-aiocli/advanced/test_support/">
       
       <link rel="shortcut icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.2.7">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-6.2.7">
     
     
       
-        <title>Intro - aiocli</title>
+        <title>Test support - aiocli</title>
       
     
     
@@ -91,7 +91,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Intro
+              Test support
             
           </span>
         </div>
@@ -234,8 +234,20 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../en/" class="md-nav__link">
         en
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../es/" class="md-nav__link">
+        es
       </a>
     </li>
   
@@ -278,16 +290,28 @@
         <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
       
       <label class="md-nav__link" for="nav-4">
-        Tutorial - User Guide
+        Advanced User Guide
         <span class="md-nav__icon md-icon"></span>
       </label>
-      <nav class="md-nav" aria-label="Tutorial - User Guide" data-md-level="1">
+      <nav class="md-nav" aria-label="Advanced User Guide" data-md-level="1">
         <label class="md-nav__title" for="nav-4">
           <span class="md-nav__icon md-icon"></span>
-          Tutorial - User Guide
+          Advanced User Guide
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../serverless_support/" class="md-nav__link">
+        Serverless support
+      </a>
+    </li>
+  
+
           
             
   
@@ -301,52 +325,9 @@
       
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        Intro
+        Test support
       </a>
       
-    </li>
-  
-
-          
-        </ul>
-      </nav>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-      
-        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5" >
-      
-      <label class="md-nav__link" for="nav-5">
-        Advanced User Guide
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-      <nav class="md-nav" aria-label="Advanced User Guide" data-md-level="1">
-        <label class="md-nav__title" for="nav-5">
-          <span class="md-nav__icon md-icon"></span>
-          Advanced User Guide
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-          
-            
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../advanced/intro/" class="md-nav__link">
-        Intro
-      </a>
     </li>
   
 
@@ -384,14 +365,51 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/ticdenis/python-aiocli/edit/master/docs/tutorial/intro.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/ticdenis/python-aiocli/edit/master/docs/advanced/test_support.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                  <h1>Intro</h1>
+                  <h1>Test support</h1>
                 
-                <p>👷‍ In progress...</p>
+                <ul>
+<li>Have you used the <a href="https://docs.aiohttp.org/en/stable/testing.html">pytest-aiohttp</a> plugin? This is inspired on it.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># code: python3 &lt;file.py&gt; &lt;command&gt; &lt;positionals&gt; &lt;optionals&gt;</span>
+
+<span class="kn">from</span> <span class="nn">aiocli.commander</span> <span class="kn">import</span> <span class="n">run_app</span><span class="p">,</span> <span class="n">Application</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="n">default_exit_code</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;greet:to&#39;</span><span class="p">,</span> <span class="n">positionals</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;--name&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">})])</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">handle_greeting</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hello </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">run_app</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+
+<span class="c1"># test: pytest &lt;test_file.py&gt;</span>
+
+<span class="kn">from</span> <span class="nn">aiocli.test_utils</span> <span class="kn">import</span> <span class="n">TestClient</span><span class="p">,</span> <span class="n">TestCommander</span>
+<span class="kn">import</span> <span class="nn">pytest</span>
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">asyncio</span>
+<span class="k">async</span> <span class="k">def</span> <span class="nf">test_handle_greeting_command</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">commander</span> <span class="o">=</span> <span class="n">TestCommander</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">TestClient</span><span class="p">(</span><span class="n">commander</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">commander</span><span class="o">.</span><span class="n">start_commander</span><span class="p">()</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="s1">&#39;greet:to --name aiocli&#39;</span>
+        <span class="n">exit_code</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">),</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">timeout_exit_code</span><span class="o">=</span><span class="mi">134</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">assert</span> <span class="n">exit_code</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">commander</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</code></pre></div>
                 
               
               
@@ -410,7 +428,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../../features/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../serverless_support/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -419,19 +437,19 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Features
+                Serverless support
               </div>
             </div>
           </a>
         
         
-          <a href="../../advanced/intro/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../../release-notes/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Intro
+                Release notes
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

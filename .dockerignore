@@ -1,0 +1,17 @@
+# External
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# Internal
+*.egg-info/
+.coverage
+.env.local
+.gitignore
+.python-version
+*.pyc
+__pycache__/
+build/
+dist/
+var/
