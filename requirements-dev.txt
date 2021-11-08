@@ -6,7 +6,7 @@ commitizen==2.20.0
 isort==5.10.0
 liccheck==0.6.2
 mkdocs==1.2.3
-mkdocs-material==6.2.7
+mkdocs-material==7.3.6
 mypy==0.910
 nest-asyncio==1.5.1
 pre-commit==2.15.0
@@ -20,4 +20,4 @@ pytoml==0.1.21
 setuptools==58.5.3
 shellcheck-py==0.7.2.1
 twine==3.5.0
-wheel==0.36.2
+wheel==0.37.0

@@ -1,6 +1,6 @@
 [metadata]
 name = "aiocli"
-version = "1.5.2"
+version = "1.5.3"
 description = "Simple and lightweight async console runner."
 license = "MIT"
 authors = ["ticdenis <denisnavarroalcaide@outlook.es>"]
@@ -13,7 +13,7 @@ include = ["LICENSE", "README.md"]
 
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools==58.5.3", "wheel==0.36.2"]
+requires = ["setuptools==58.5.3", "wheel==0.37.0"]
 
 [tool.black]
 include = '\.pyi?$'

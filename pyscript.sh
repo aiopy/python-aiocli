@@ -3,7 +3,7 @@
 set -e
 
 _help() {
-  echo "Usage:  pyscript.sh [OPTIONS] COMMAND
+  echo "Usage:  $0 [OPTIONS] COMMAND
 
 Commands:
   install                             Install Python dependencies
@@ -30,9 +30,13 @@ _install() {
   pre-commit install --hook-type commit-msg || true
 }
 
+_build_docs() {
+  python3 -m mkdocs build -f ./docs_src/mkdocs.yml -d ./../docs
+}
+
 _build() {
   python3 setup.py sdist bdist_wheel
-  python3 -m mkdocs build -f ./docs_src/mkdocs.yml -d ./../docs
+  _build_docs
 }
 
 _deploy() {
@@ -99,7 +103,7 @@ export PYTHONUNBUFFERED=1
 case "$function" in
 -h | --help) function=help ;;
 -v | --version) function=version ;;
-help | version | build | deploy | install | fmt | security_analysis | static_analysis | test | coverage | clean) function=$function ;;
+help | version | build_docs | build | deploy | install | fmt | security_analysis | static_analysis | test | coverage | clean) function=$function ;;
 *) echo >&2 "pyscript: '$function' is not a pyscript command." && exit 1 ;;
 esac
 

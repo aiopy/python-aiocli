@@ -23,6 +23,9 @@ nav:
   - Advanced User Guide:
       - advanced/serverless_support.md
       - advanced/test_support.md
+      - advanced/middleware.md
+      - advanced/exception_handler.md
+      - advanced/hooks.md
   - release-notes.md
 extra:
   social:
