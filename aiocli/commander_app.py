@@ -84,7 +84,7 @@ def command(
 CommandMiddleware = Callable[[Command, Dict[str, Any]], Union[Callable[[Any], None], Coroutine[Any, Any, None]]]
 
 CommandExceptionHandler = Callable[
-    [BaseException, Command, Dict[str, Any]], Union[Callable[[Any], Optional[int]], Coroutine[Any, Any, Optional[int]]]
+    [BaseException, Command, Dict[str, Any]], Union[Optional[int], Coroutine[Any, Any, Optional[int]]]
 ]
 
 CommandHook = Callable[['Application'], Union[None, Awaitable[None]]]
@@ -248,6 +248,10 @@ class Application:
         return self._parser
 
     @property
+    def state(self) -> State:
+        return self._state
+
+    @property
     def exit_code(self) -> int:
         return self._exit_code
 
@@ -293,11 +297,11 @@ class Application:
         for handler in command_middleware:
             if self._debug:
                 logger.debug(
-                    msg='Executing middleware {} with {}({})...',
+                    msg='Executing middleware {0} with {1}({2})...',
                     args=[
                         type(handler),
                         type(cmd),
-                        ', '.join(['{}={}'.format(key, val) for key, val in kwargs.items()]),
+                        ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()]),
                     ],
                 )
             _ = await handler(cmd, kwargs) if iscoroutinefunction(handler) else handler(cmd, kwargs)  # type: ignore
@@ -306,7 +310,7 @@ class Application:
         for hook in command_hooks:
             if self._debug:
                 logger.debug(
-                    msg='Executing hook {}...',
+                    msg='Executing hook {0}...',
                     args=[type(hook)],
                 )
             _ = await hook(self) if iscoroutinefunction(hook) else hook(self)  # type: ignore
@@ -351,8 +355,8 @@ class Application:
     async def _execute_command_handler(self, handler: CommandHandler, kwargs: Dict[str, Any]) -> int:
         if self._debug:
             logger.debug(
-                msg='Executing command handler {} with {}({})...',
-                args=[type(handler), ', '.join(['{}={}'.format(key, val) for key, val in kwargs.items()])],
+                msg='Executing command handler {0} with {1}({2})...',
+                args=[type(handler), ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()])],
             )
         if iscoroutinefunction(handler):
             return await handler(**kwargs)  # type: ignore
@@ -366,15 +370,20 @@ class Application:
     ) -> Optional[int]:
         typ = type(err)
         if typ not in self._exception_handlers:
-            raise err
+            for typ_ in list(self._exception_handlers.keys()):
+                if issubclass(typ, typ_):
+                    typ = typ_
+                    break
+            else:
+                raise err
         exception_handler = self._exception_handlers[typ]
         if self._debug:
             logger.debug(
-                msg='Executing exception handler {} with {}({})...',
+                msg='Executing exception handler {0} with {1}({2})...',
                 args=[
                     type(exception_handler),
                     type(err),
-                    ', '.join(['{}={}'.format(key, val) for key, val in kwargs.items()]),
+                    ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()]),
                 ],
             )
         if iscoroutinefunction(exception_handler):

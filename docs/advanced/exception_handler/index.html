@@ -11,14 +11,14 @@
       
       
       
-        <link rel="canonical" href="https://ticdenis.github.io/python-aiocli/advanced/test_support/">
+        <link rel="canonical" href="https://ticdenis.github.io/python-aiocli/advanced/exception_handler/">
       
       <link rel="shortcut icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-6.2.7">
     
     
       
-        <title>Test support - aiocli</title>
+        <title>Exception handler - aiocli</title>
       
     
     
@@ -91,7 +91,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Test support
+              Exception handler
             
           </span>
         </div>
@@ -316,18 +316,11 @@
             
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../test_support/" class="md-nav__link">
         Test support
       </a>
-      
     </li>
   
 
@@ -347,11 +340,18 @@
             
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../exception_handler/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Exception handler
       </a>
+      
     </li>
   
 
@@ -401,51 +401,16 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/ticdenis/python-aiocli/edit/master/docs/advanced/test_support.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/ticdenis/python-aiocli/edit/master/docs/advanced/exception_handler.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                  <h1>Test support</h1>
+                  <h1>Exception handler</h1>
                 
                 <ul>
-<li>Have you used the <a href="https://docs.aiohttp.org/en/stable/testing.html">pytest-aiohttp</a> plugin? This is inspired on it.</li>
+<li>exception handler...</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="c1"># code: python3 &lt;file.py&gt; &lt;command&gt; &lt;positionals&gt; &lt;optionals&gt;</span>
-
-<span class="kn">from</span> <span class="nn">aiocli.commander</span> <span class="kn">import</span> <span class="n">run_app</span><span class="p">,</span> <span class="n">Application</span>
-
-<span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="n">default_exit_code</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-<span class="nd">@app</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;greet:to&#39;</span><span class="p">,</span> <span class="n">positionals</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;--name&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">})])</span>
-<span class="k">async</span> <span class="k">def</span> <span class="nf">handle_greeting</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hello </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="mi">0</span>
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">run_app</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
-
-<span class="c1"># test: pytest &lt;test_file.py&gt;</span>
-
-<span class="kn">from</span> <span class="nn">aiocli.test_utils</span> <span class="kn">import</span> <span class="n">TestClient</span><span class="p">,</span> <span class="n">TestCommander</span>
-<span class="kn">import</span> <span class="nn">pytest</span>
-
-<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">asyncio</span>
-<span class="k">async</span> <span class="k">def</span> <span class="nf">test_handle_greeting_command</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">commander</span> <span class="o">=</span> <span class="n">TestCommander</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
-    <span class="n">client</span> <span class="o">=</span> <span class="n">TestClient</span><span class="p">(</span><span class="n">commander</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">await</span> <span class="n">commander</span><span class="o">.</span><span class="n">start_commander</span><span class="p">()</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="s1">&#39;greet:to --name aiocli&#39;</span>
-        <span class="n">exit_code</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span>
-            <span class="n">args</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">),</span>
-            <span class="n">timeout</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
-            <span class="n">timeout_exit_code</span><span class="o">=</span><span class="mi">134</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">assert</span> <span class="n">exit_code</span> <span class="o">==</span> <span class="mi">0</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="k">await</span> <span class="n">commander</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</code></pre></div>
                 
               
               
@@ -464,7 +429,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
-          <a href="../serverless_support/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../middleware/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-footer-nav__button md-icon">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
             </div>
@@ -473,19 +438,19 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Serverless support
+                Middleware
               </div>
             </div>
           </a>
         
         
-          <a href="../middleware/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../hooks/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Middleware
+                Hooks
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">

@@ -11,21 +11,21 @@
       
       
       
-        <link rel="canonical" href="https://ticdenis.github.io/python-aiocli/advanced/test_support/">
+        <link rel="canonical" href="https://ticdenis.github.io/python-aiocli/en/advanced/middleware/">
       
-      <link rel="shortcut icon" href="../../assets/images/favicon.png">
+      <link rel="shortcut icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-6.2.7">
     
     
       
-        <title>Test support - aiocli</title>
+        <title>Middleware - aiocli</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.cb6bc1d0.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.cb6bc1d0.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.39b8e14a.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.39b8e14a.min.css">
         
       
     
@@ -91,7 +91,7 @@
         <div class="md-header-nav__topic">
           <span class="md-ellipsis">
             
-              Test support
+              Middleware
             
           </span>
         </div>
@@ -197,7 +197,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         aiocli
       </a>
     </li>
@@ -234,7 +234,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../en/" class="md-nav__link">
+      <a href="../../" class="md-nav__link">
         en
       </a>
     </li>
@@ -246,7 +246,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../es/" class="md-nav__link">
+      <a href="../../../es/" class="md-nav__link">
         es
       </a>
     </li>
@@ -267,7 +267,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/" class="md-nav__link">
+      <a href="../../../features/" class="md-nav__link">
         Features
       </a>
     </li>
@@ -280,14 +280,12 @@
 
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" >
       
       <label class="md-nav__link" for="nav-4">
         Advanced User Guide
@@ -306,7 +304,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../serverless_support/" class="md-nav__link">
+      <a href="../../../advanced/serverless_support/" class="md-nav__link">
         Serverless support
       </a>
     </li>
@@ -316,18 +314,11 @@
             
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../advanced/test_support/" class="md-nav__link">
         Test support
       </a>
-      
     </li>
   
 
@@ -337,7 +328,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../middleware/" class="md-nav__link">
+      <a href="../../../advanced/middleware/" class="md-nav__link">
         Middleware
       </a>
     </li>
@@ -349,7 +340,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../exception_handler/" class="md-nav__link">
+      <a href="../../../advanced/exception_handler/" class="md-nav__link">
         Exception handler
       </a>
     </li>
@@ -361,7 +352,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../hooks/" class="md-nav__link">
+      <a href="../../../advanced/hooks/" class="md-nav__link">
         Hooks
       </a>
     </li>
@@ -382,7 +373,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../release-notes/" class="md-nav__link">
+      <a href="../../../release-notes/" class="md-nav__link">
         Release notes
       </a>
     </li>
@@ -401,51 +392,16 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/ticdenis/python-aiocli/edit/master/docs/advanced/test_support.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/ticdenis/python-aiocli/edit/master/docs/en/advanced/middleware.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                  <h1>Test support</h1>
+                  <h1>Middleware</h1>
                 
                 <ul>
-<li>Have you used the <a href="https://docs.aiohttp.org/en/stable/testing.html">pytest-aiohttp</a> plugin? This is inspired on it.</li>
+<li>middleware...</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="c1"># code: python3 &lt;file.py&gt; &lt;command&gt; &lt;positionals&gt; &lt;optionals&gt;</span>
-
-<span class="kn">from</span> <span class="nn">aiocli.commander</span> <span class="kn">import</span> <span class="n">run_app</span><span class="p">,</span> <span class="n">Application</span>
-
-<span class="n">app</span> <span class="o">=</span> <span class="n">Application</span><span class="p">(</span><span class="n">default_exit_code</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-<span class="nd">@app</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;greet:to&#39;</span><span class="p">,</span> <span class="n">positionals</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;--name&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">})])</span>
-<span class="k">async</span> <span class="k">def</span> <span class="nf">handle_greeting</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hello </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="mi">0</span>
-
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">run_app</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
-
-<span class="c1"># test: pytest &lt;test_file.py&gt;</span>
-
-<span class="kn">from</span> <span class="nn">aiocli.test_utils</span> <span class="kn">import</span> <span class="n">TestClient</span><span class="p">,</span> <span class="n">TestCommander</span>
-<span class="kn">import</span> <span class="nn">pytest</span>
-
-<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">asyncio</span>
-<span class="k">async</span> <span class="k">def</span> <span class="nf">test_handle_greeting_command</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">commander</span> <span class="o">=</span> <span class="n">TestCommander</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
-    <span class="n">client</span> <span class="o">=</span> <span class="n">TestClient</span><span class="p">(</span><span class="n">commander</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">await</span> <span class="n">commander</span><span class="o">.</span><span class="n">start_commander</span><span class="p">()</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="s1">&#39;greet:to --name aiocli&#39;</span>
-        <span class="n">exit_code</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span>
-            <span class="n">args</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">),</span>
-            <span class="n">timeout</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
-            <span class="n">timeout_exit_code</span><span class="o">=</span><span class="mi">134</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">assert</span> <span class="n">exit_code</span> <span class="o">==</span> <span class="mi">0</span>
-    <span class="k">finally</span><span class="p">:</span>
-        <span class="k">await</span> <span class="n">commander</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</code></pre></div>
                 
               
               
@@ -460,41 +416,6 @@
       
         
 <footer class="md-footer">
-  
-    <div class="md-footer-nav">
-      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
-        
-          <a href="../serverless_support/" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-            </div>
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Previous
-                </span>
-                Serverless support
-              </div>
-            </div>
-          </a>
-        
-        
-          <a href="../middleware/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Middleware
-              </div>
-            </div>
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
-    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -538,15 +459,15 @@
       
     </div>
     
-      <script src="../../assets/javascripts/vendor.53cc9318.min.js"></script>
-      <script src="../../assets/javascripts/bundle.e9c9f54f.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
+      <script src="../../../assets/javascripts/vendor.53cc9318.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.e9c9f54f.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({
-          base: "../..",
+          base: "../../..",
           features: ['search.suggest', 'search.highlight'],
           search: Object.assign({
-            worker: "../../assets/javascripts/worker/search.9c0e82ba.min.js"
+            worker: "../../../assets/javascripts/worker/search.9c0e82ba.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>

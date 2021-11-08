@@ -4,6 +4,7 @@
 
 * Common Serverless wrappers (aws, az and gcp) added.
 * Fix event loop issues closing it.
+* Improve exception handlers matching.
 * Improve Docs.
 
 ### **1.4.x**
