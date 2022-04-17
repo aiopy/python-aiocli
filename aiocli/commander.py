@@ -5,14 +5,15 @@ from asyncio import gather, get_event_loop, iscoroutine
 from asyncio.events import AbstractEventLoop
 from typing import Any, Awaitable, Callable, List, Optional, Set, Union, cast
 
-from aiocli.commander_app import Application, Command, Depends, command
+from aiocli.commander_app import Application, Command, Depends, State, command
 
 __all__ = (
     # commander_app
-    'Application',
+    'State',
+    'Depends',
     'Command',
     'command',
-    'Depends',
+    'Application',
     # commander
     'run_app',
     'ApplicationParser',
@@ -58,7 +59,7 @@ class AppRunner:
         *,
         loop: Optional[AbstractEventLoop] = None,
         handle_signals: bool = False,
-        exit_code: bool = False
+        exit_code: bool = False,
     ) -> None:
         self._app = app
         self._loop = loop or get_event_loop()
@@ -105,7 +106,7 @@ async def _run_app(
     loop: AbstractEventLoop,
     handle_signals: bool = True,
     argv: Optional[List[str]] = None,
-    exit_code: bool = True
+    exit_code: bool = True,
 ) -> None:
     app = cast(Application, await app if iscoroutine(app) else app)  # type: ignore
     runner = AppRunner(app, loop=loop, handle_signals=handle_signals, exit_code=exit_code)
@@ -129,7 +130,7 @@ def run_app(
     argv: Optional[List[str]] = None,
     exit_code: bool = True,
     close_loop: bool = True,
-    parser: Optional[ApplicationParser] = None
+    parser: Optional[ApplicationParser] = None,
 ) -> ApplicationReturn:
     def wrapper(*args, **kwargs) -> Optional[int]:  # type: ignore
         loop_ = loop or get_event_loop()

@@ -16,20 +16,22 @@ from typing import (
 
 __all__ = (
     # commander_app
+    'State',
+    'Depends',
     'Command',
     'command',
     'CommandHandler',
     'Application',
-    'Depends',
 )
 
-from .helpers import iscoroutinefunction
+
+from .helpers import resolve_function
 from .logger import logger
 
 CommandHandler = Callable[..., Union[Callable[[Any], Optional[int]], Coroutine[Any, Any, Optional[int]]]]
 
 
-class State:
+class State(dict):
     pass
 
 
@@ -120,7 +122,7 @@ class Application:
         on_shutdown: Optional[Sequence[CommandHook]] = None,
         on_cleanup: Optional[Sequence[CommandHook]] = None,
         deprecated: Optional[bool] = None,
-        state: Optional[State] = None,
+        state: Optional[Union[State, Dict[str, Any]]] = None,
     ) -> None:
         self._parser = ArgumentParser(
             description=description,
@@ -128,9 +130,27 @@ class Application:
             formatter_class=RawTextHelpFormatter,
         )
         self._parser.add_argument('--version', action='version', version=version)
-        self._parsers = {}
+        self._parsers = {
+            '-h': self._parser,
+            '--help': self._parser,
+            '-v': self._parser,
+            '--version': self._parser,
+        }
         self._debug = debug
-        self._commands = {}
+
+        def self_command(name: str) -> Command:
+            async def self_handler() -> int:
+                _ = self._parser.parse_args([name])
+                return default_exit_code
+
+            return Command(name=name, handler=self_handler, positionals=[], optionals=[], deprecated=False)
+
+        self._commands = {
+            '-h': self_command('-h'),
+            '--help': self_command('--help'),
+            '-v': self_command('--version'),
+            '--version': self_command('--version'),
+        }
         self.add_commands([] if commands is None else commands)
         self._exit_code = default_exit_code
         self._middleware = [] if middleware is None else list(middleware)
@@ -140,32 +160,34 @@ class Application:
         self._on_cleanup = [] if on_cleanup is None else list(on_cleanup)
         self._deprecated = bool(deprecated)
         self._dependencies_cached = {}
-        self._state = State() if state is None else state
+        self._state = State(state or {}) if not isinstance(state, State) else state
 
     async def __call__(self, args: List[str]) -> int:
-        command_name = args[0] if len(args) > 0 else ''
-        if command_name in ['-h', '--help', '--version']:
-            try:
-                _ = self._parser.parse_args([command_name])
-            except SystemExit as err:
-                self._exit_code = err.code
-        elif command_name not in self._parsers:
-            self._exit_code = 1
-            raise ValueError('Missing command')
-        else:
-            if self._deprecated:
-                logger.warning('Executing a deprecated command...')
-            cmd = self._commands[command_name]
-            handler = cmd.handler
-            args = vars(self._parsers[command_name].parse_args(args[1:]))  # type: ignore
-            kwargs = await self._resolve_command_handler_kwargs(handler, args)  # type: ignore
-            await self._execute_command_middleware(self._middleware, cmd, kwargs)
-            try:
-                exit_code = await self._execute_command_handler(cmd.handler, kwargs)
-            except BaseException as err:
-                exit_code = await self._execute_command_exception_handler(err, cmd, kwargs)  # type: ignore
+        exit_code: Optional[int] = self._exit_code
+        try:
+            exit_code = await self._execute_command(name=args[0] if len(args) > 0 else '-h', args=args[1:])
+        except SystemExit as err:
+            exit_code = err.code
+        finally:
             self._exit_code = self._exit_code if exit_code is None else exit_code
         return self._exit_code
+
+    async def _execute_command(self, name: str, args: List[str]) -> Optional[int]:
+        if name not in self._parsers:
+            raise SystemExit('Missing command')
+        self._log(msg='{0}Command got "{1}".'.format('[deprecated] ' if self._deprecated else '', name))
+        self._log(
+            msg='{0}Handler got "{1}".'.format(
+                '[deprecated] ' if self._deprecated else '', self._commands[name].handler.__name__
+            )
+        )
+        kwargs = await self._resolve_command_handler_args(name, args)
+        kwargs = await self._resolve_command_handler_kwargs(self._commands[name].handler, kwargs)
+        try:
+            await self._execute_command_middleware(self._middleware, self._commands[name], kwargs)
+            return await self._execute_command_handler(self._commands[name].handler, kwargs)
+        except BaseException as err:
+            return await self._execute_command_exception_handler(err, self._commands[name], kwargs)
 
     def include_router(self, router: 'Application') -> None:
         for name, cmd in router._commands.items():
@@ -295,72 +317,97 @@ class Application:
         kwargs: Dict[str, Any],
     ) -> None:
         for handler in command_middleware:
-            if self._debug:
-                logger.debug(
-                    msg='Executing middleware {0} with {1}({2})...',
-                    args=[
-                        type(handler),
-                        type(cmd),
-                        ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()]),
-                    ],
+            self._log(
+                msg='Executing middleware {0} with {1}({2})...'.format(
+                    type(handler),
+                    type(cmd),
+                    ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()]),
                 )
-            _ = await handler(cmd, kwargs) if iscoroutinefunction(handler) else handler(cmd, kwargs)  # type: ignore
+            )
+            _ = await resolve_function(handler, cmd, kwargs)
 
     async def _execute_command_hooks(self, command_hooks: List[CommandHook]) -> None:
         for hook in command_hooks:
-            if self._debug:
-                logger.debug(
-                    msg='Executing hook {0}...',
-                    args=[type(hook)],
-                )
-            _ = await hook(self) if iscoroutinefunction(hook) else hook(self)  # type: ignore
+            self._log(msg='Executing hook {0}...'.format(type(hook)))
+            _ = await resolve_function(hook, self)
 
     def _update_parser_description(self, name: str) -> None:
         self._parser.description = '{0}{1}\n'.format(self._parser.description, name)
 
-    async def _resolve_command_handler_kwargs(self, call: CommandHandler, cmd_args: Dict[str, Any]) -> Dict[str, Any]:
-        kwargs = {}
-        for param in signature(call).parameters.values():
-            name: str = param.name
-            if name in cmd_args:
-                value = cmd_args[name]
-                kwargs.update({name: value})
-                continue
-            if name not in kwargs:
-                value = await self._resolve_or_retrieve_from_cache_dependency(param.default)
-                kwargs.update({name: value})
-                continue
-        return kwargs
+    async def _resolve_command_handler_args(self, name: str, args: List[str]) -> Dict[str, Any]:
+        if args:
+            self._log(msg='Resolving args: {0}'.format(', '.join(args)))
+        return vars(self._parsers[name].parse_args(args))
 
-    async def _resolve_command_handler_depends_args(self, depends: _Depends) -> Any:
+    async def _resolve_command_handler_kwargs(self, func: CommandHandler, kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        func_params = [param for param in signature(func).parameters.values() if param.name not in kwargs]
+        self._log(msg='Resolving kwargs: {0}'.format(', '.join([func_param.name for func_param in func_params])))
+        kwargs_ = {**kwargs}
+        for param in func_params:
+            kwargs_.update(
+                {
+                    param.name: await self._resolve_or_retrieve_from_cache_dependency(
+                        param.name, param.annotation, param.default
+                    )
+                }
+            )
+        return kwargs_
+
+    async def _resolve_command_handler_depends_args(self, depends: _Depends, is_handler: bool = True) -> Any:
         kwargs = {}
         for param in signature(depends.dependency).parameters.values():
-            value = await self._resolve_or_retrieve_from_cache_dependency(param.default)
-            kwargs.update({param.name: value})
-        if iscoroutinefunction(depends.dependency):
-            return await depends.dependency(**kwargs)
-        return depends.dependency(**kwargs)
+            self._log(
+                msg='Resolving "{0}" ({1}) {2} argument for "{3}" ({4})'.format(
+                    param.name,
+                    id(param.name),
+                    'handler' if is_handler else 'function',
+                    depends.dependency.__name__,
+                    id(depends.dependency),
+                )
+            )
+            kwargs.update(
+                {
+                    param.name: await self._resolve_or_retrieve_from_cache_dependency(
+                        param.name, param.annotation, param.default
+                    )
+                }
+            )
+            self._log(
+                msg='Solved "{0}" ({1}) {2} argument for "{3}" ({4})'.format(
+                    param.name,
+                    id(param.name),
+                    'handler' if is_handler else 'function',
+                    depends.dependency.__name__,
+                    id(depends.dependency),
+                )
+            )
+        return await resolve_function(depends.dependency, **kwargs)
 
-    async def _resolve_or_retrieve_from_cache_dependency(self, value: Any) -> Any:
+    async def _resolve_or_retrieve_from_cache_dependency(self, of: str, annotation: Any, value: Any) -> Any:
         if isinstance(value, _Depends):
+            self._log(
+                msg='Resolving "{0}" ({1}) dependency for "{2}" ({3})'.format(
+                    value.dependency.__name__, id(value.dependency), of, id(of)
+                )
+            )
             if value.cache and value.dependency in self._dependencies_cached:
                 new_value = self._dependencies_cached[value.dependency]
             else:
-                new_value = await self._resolve_command_handler_depends_args(value)
+                new_value = await self._resolve_command_handler_depends_args(value, False)
             if value.cache:
                 self._dependencies_cached.update({value.dependency: new_value})
             value = new_value
+        elif isinstance(annotation, State) or issubclass(annotation, State):
+            value = self._state
         return value
 
     async def _execute_command_handler(self, handler: CommandHandler, kwargs: Dict[str, Any]) -> int:
-        if self._debug:
-            logger.debug(
-                msg='Executing command handler {0} with {1}({2})...',
-                args=[type(handler), ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()])],
-            )
-        if iscoroutinefunction(handler):
-            return await handler(**kwargs)  # type: ignore
-        return handler(**kwargs)  # type: ignore
+        self._log(
+            msg='Executing command handler with: {0}'.format(
+                ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()])
+            ),
+        )
+        return await resolve_function(handler, **kwargs)
 
     async def _execute_command_exception_handler(
         self,
@@ -377,15 +424,15 @@ class Application:
             else:
                 raise err
         exception_handler = self._exception_handlers[typ]
-        if self._debug:
-            logger.debug(
-                msg='Executing exception handler {0} with {1}({2})...',
-                args=[
-                    type(exception_handler),
-                    type(err),
-                    ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()]),
-                ],
+        self._log(
+            msg='Executing exception handler {0} with ({1})...'.format(
+                type(exception_handler),
+                ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()]),
             )
-        if iscoroutinefunction(exception_handler):
-            return await exception_handler(err, cmd, kwargs)  # type: ignore
-        return exception_handler(err, cmd, kwargs)  # type: ignore
+        )
+        return await resolve_function(exception_handler, err, cmd, kwargs)
+
+    def _log(self, msg: str) -> None:
+        if self._debug:
+            # print(msg)
+            logger.debug(msg)

@@ -1,123 +1,123 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/features/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/features/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/release-notes/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/release-notes/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/advanced/exception_handler/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/advanced/exception_handler/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/advanced/hooks/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/advanced/hooks/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/advanced/middleware/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/advanced/middleware/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/advanced/serverless_support/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/advanced/serverless_support/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/advanced/test_support/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/advanced/test_support/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/en/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/en/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/en/features/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/en/features/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/en/release-notes/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/en/release-notes/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/en/advanced/exception_handler/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/en/advanced/exception_handler/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/en/advanced/hooks/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/en/advanced/hooks/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/en/advanced/middleware/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/en/advanced/middleware/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/en/advanced/serverless_support/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/en/advanced/serverless_support/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/en/advanced/test_support/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/en/advanced/test_support/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/es/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/es/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/es/features/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/es/features/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/es/release-notes/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/es/release-notes/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/es/advanced/exception_handler/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/es/advanced/exception_handler/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/es/advanced/hooks/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/es/advanced/hooks/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/es/advanced/middleware/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/es/advanced/middleware/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/es/advanced/serverless_support/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/es/advanced/serverless_support/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://ticdenis.github.io/python-aiocli/es/advanced/test_support/</loc>
-         <lastmod>2021-11-08</lastmod>
+         <loc>https://aiopy.github.io/python-aiocli/es/advanced/test_support/</loc>
+         <lastmod>2022-04-17</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>

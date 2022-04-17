@@ -82,12 +82,6 @@ def test_application_specific_exit_code() -> None:
 
 
 @pytest.mark.asyncio
-async def test_application_fails_when_command_not_found() -> None:
-    with pytest.raises(ValueError):
-        await Application().__call__([])
-
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize('command_name', ['-h', '--help'])
 async def test_application_print_help_and_return_exit_code_0_when_command_is(command_name: str) -> None:
     assert await Application().__call__([command_name]) == 0
