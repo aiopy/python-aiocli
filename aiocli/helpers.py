@@ -21,3 +21,9 @@ def iscoroutinefunction(func: Callable[..., Any]) -> bool:
 
 if sys.version_info >= (3, 8):
     iscoroutinefunction = asyncio.iscoroutinefunction
+
+
+async def resolve_function(func: Callable[..., Any], *args, **kwargs) -> Any:  # type: ignore
+    if iscoroutinefunction(func):
+        return await func(*args, **kwargs)
+    return func(*args, **kwargs)

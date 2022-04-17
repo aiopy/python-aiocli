@@ -27,17 +27,16 @@ from os import getenv
 
 from aiocli.commander import run_app, Application, Depends
 
-app = Application()
-
-def _get_envs() -> dict[str, str]:
-    return {
+app = Application(state={
+    'envs': {
         'LOGGER_NAME': str(getenv('LOGGER_NAME', 'example_app')),
         'LOGGER_LEVEL': str(getenv('LOGGER_LEVEL', 'INFO')),
     }
+})
 
-def _get_logger(envs: dict[str, str] = Depends(_get_envs)) -> Logger:
-    logger = getLogger(envs['LOGGER_NAME'])
-    logger.setLevel(envs['LOGGER_LEVEL'])
+def _get_logger(state: State) -> Logger:
+    logger = getLogger(state.get('envs')['LOGGER_NAME'])
+    logger.setLevel(state.get('envs')['LOGGER_LEVEL'])
     handler = StreamHandler()
     logger.addHandler(handler)
     return logger
@@ -63,4 +62,4 @@ if __name__ == '__main__':
 
 ## License
 
-[MIT](https://github.com/ticdenis/python-aiocli/blob/master/LICENSE)
+[MIT](https://github.com/aiopy/python-aiocli/blob/master/LICENSE)

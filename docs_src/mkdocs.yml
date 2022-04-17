@@ -1,6 +1,6 @@
 site_name: aiocli
 site_description: Simple and lightweight async console runner
-site_url: https://ticdenis.github.io/python-aiocli/
+site_url: https://aiopy.github.io/python-aiocli/
 theme:
   name: material
   palette:
@@ -12,8 +12,8 @@ theme:
     - search.highlight
   icon:
     repo: fontawesome/brands/github-alt
-repo_name: ticdenis/python-aiocli
-repo_url: https://github.com/ticdenis/python-aiocli
+repo_name: aiopy/python-aiocli
+repo_url: https://github.com/aiopy/python-aiocli
 nav:
   - aiocli: index.md
   - Languages:
@@ -32,7 +32,7 @@ extra:
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/in/denisnavarroalcaide
     - icon: fontawesome/brands/github
-      link: https://github.com/ticdenis
+      link: https://github.com/aiopy
   alternate:
     - link: /en/
       name: en - English

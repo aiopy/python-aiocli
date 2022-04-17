@@ -1,19 +1,19 @@
 [metadata]
 name = "aiocli"
-version = "1.5.3"
+version = "1.6.0"
 description = "Simple and lightweight async console runner."
 license = "MIT"
 authors = ["ticdenis <denisnavarroalcaide@outlook.es>"]
 readme = "README.md"
-repository = "https://github.com/ticdenis/python-aiocli"
-documentation = "https://ticdenis.github.io/python-aiocli/"
+repository = "https://github.com/aiopy/python-aiocli"
+documentation = "https://aiopy.github.io/python-aiocli/"
 keywords = ["asyncio", "async", "aio", "cli", "console"]
 classifiers = ["Topic :: Software Development :: Libraries :: Python Modules"]
 include = ["LICENSE", "README.md"]
 
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools==58.5.3", "wheel==0.37.0"]
+requires = ["setuptools>=59.6.0", "wheel==0.37.1"]
 
 [tool.black]
 include = '\.pyi?$'
@@ -33,13 +33,12 @@ filelock = "3.0.12"
 [tool.pylint.master]
 jobs = "0"
 [tool.pylint.messages_control]
-disable = "C0103,C0114,C0115,C0116,C0209,C0301,E0239,E1101,E1136,R0902,R0903,R0913,W0212,W0611,W0622,W0703"
+disable = "C0103,C0114,C0115,C0116,C0209,C0301,E0239,E1101,E1136,R0801,R0902,R0903,R0913,W0212,W0611,W0622,W0703"
 
 [tool.pytest.ini_options]
 cache_dir = "var/cache/.pytest_cache"
 addopts = "-q -n auto -p no:warnings --no-cov-on-fail"
 testpaths = ["tests"]
-
 
 [tool.tox]
 legacy_tox_ini = """

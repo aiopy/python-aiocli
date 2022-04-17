@@ -10,8 +10,8 @@ Commands:
   build                               Build Python application
   deploy                              Deploy Python application
   fmt                                 Format Python code
-  security_analysis                   Analyze security of Python code
-  static_analysis                     Analyze rules of Python code
+  security-analysis                   Analyze security of Python code
+  static-analysis                     Analyze rules of Python code
   test [unit|integration|functional]  Run Python tests (default all suites)
   coverage                            Run Python test coverage
   clean                               Remove Python rubbish produced
@@ -83,28 +83,32 @@ _clean() {
   rm -rf build dist var
 }
 
-project=aiocli
-function=$1
+main() {
+  project="$(awk '/^name.*=.*$/ {gsub(/"/, "", $3); print($3); exit}' "pyproject.toml")"
+  function=$1
 
-test "$#" -ne 0 && shift 1
-test -z "$function" && function=help
+  test "$#" -ne 0 && shift 1
+  test -z "$function" && function=help
 
-set -a
-tox_pyversion=$(grep "envlist" < "pyproject.toml"  | sed "s/[^0-9]*//")
-# shellcheck disable=SC1090,SC1091
-if [ -f "var/tox/py$tox_pyversion/bin/activate" ]; then . "var/tox/py$tox_pyversion/bin/activate"; fi;
-set +a
+  set -a
+  tox_pyversion=$(grep "envlist" < "pyproject.toml"  | sed "s/[^0-9]*//")
+  # shellcheck disable=SC1090,SC1091
+  if [ -f "var/tox/py$tox_pyversion/bin/activate" ]; then . "var/tox/py$tox_pyversion/bin/activate"; fi;
+  set +a
 
-export PYTHONPATH=.
-export PYTHONDONTWRITEBYTECODE=1
-export PYTHONUNBUFFERED=1
+  export PYTHONPATH=.
+  export PYTHONDONTWRITEBYTECODE=1
+  export PYTHONUNBUFFERED=1
 
-# shellcheck disable=SC2269
-case "$function" in
--h | --help) function=help ;;
--v | --version) function=version ;;
-help | version | build_docs | build | deploy | install | fmt | security_analysis | static_analysis | test | coverage | clean) function=$function ;;
-*) echo >&2 "pyscript: '$function' is not a pyscript command." && exit 1 ;;
-esac
+  # shellcheck disable=SC2269
+  case "$function" in
+  -h | --help | help) function=help ;;
+  -v | --version | version) function=version ;;
+  build-docs | build | deploy | install | fmt | security-analysis | static-analysis | test | coverage | clean) function=$(echo $function | sed 's/\-/\_/g') ;;
+  *) echo >&2 "pyscript: '$function' is not a pyscript command." && exit 1 ;;
+  esac
 
-eval "_$function" "$@"
+  "_$function" "$@"
+}
+
+main "$@"
