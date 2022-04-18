@@ -1,6 +1,6 @@
 import asyncio
-import functools
-import sys
+from functools import partial
+from sys import version_info
 from typing import Any, Callable, Optional, Set
 
 
@@ -9,17 +9,17 @@ def all_tasks(loop: Optional[asyncio.AbstractEventLoop] = None) -> Set["asyncio.
     return {t for t in tasks if not t.done()}
 
 
-if sys.version_info >= (3, 7):
+if version_info >= (3, 7):
     all_tasks = getattr(asyncio, 'all_tasks')
 
 
 def iscoroutinefunction(func: Callable[..., Any]) -> bool:
-    while isinstance(func, functools.partial):
+    while isinstance(func, partial):
         func = func.func
     return asyncio.iscoroutinefunction(func)
 
 
-if sys.version_info >= (3, 8):
+if version_info >= (3, 8):
     iscoroutinefunction = asyncio.iscoroutinefunction
 
 
