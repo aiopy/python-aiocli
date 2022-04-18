@@ -1,12 +1,14 @@
-from argparse import ArgumentParser, RawTextHelpFormatter
+from argparse import Action, ArgumentParser, RawTextHelpFormatter
 from inspect import signature
 from typing import (
     Any,
     Awaitable,
     Callable,
+    Container,
     Coroutine,
     Dict,
     List,
+    NamedTuple,
     Optional,
     Sequence,
     Tuple,
@@ -18,12 +20,12 @@ __all__ = (
     # commander_app
     'State',
     'Depends',
+    'CommandArgument',
     'Command',
     'command',
     'CommandHandler',
     'Application',
 )
-
 
 from .helpers import resolve_function
 from .logger import logger
@@ -35,6 +37,7 @@ class State(dict):
     pass
 
 
+# dataclass
 class _Depends:
     def __init__(self, dependency: Callable[..., Any], cache: bool) -> None:
         self.dependency = dependency
@@ -45,34 +48,88 @@ def Depends(dependency: Callable[..., Any], cache: bool = True) -> Any:
     return _Depends(dependency=dependency, cache=cache)
 
 
+# https://docs.python.org/3/library/argparse.html#the-add-argument-method
+class CommandArgument(NamedTuple):
+    name_or_flags: Union[str, List[str]]
+    action: Optional[Union[str, Action]] = None
+    nargs: Optional[Union[int, str]] = None
+    const: Any = None
+    default: Any = None
+    type: Union[Type[Any], Callable[[str], Any]] = str
+    choices: Optional[Container[Any]] = None
+    required: Optional[bool] = None
+    help: Optional[str] = None
+    metavar: Optional[str] = None
+    dest: Optional[str] = None
+
+
+# dataclass
 class Command:
     name: str
     handler: CommandHandler
-    positionals: List[Tuple[str, Dict[str, Any]]]
-    optionals: List[Tuple[str, Dict[str, Any]]]
+    positionals: List[
+        Union[
+            Tuple[str, Dict[str, Any]],
+            CommandArgument,
+        ]
+    ]
+    optionals: List[
+        Union[
+            Tuple[str, Dict[str, Any]],
+            CommandArgument,
+        ]
+    ]
     deprecated: Optional[bool]
+    description: Optional[str]
 
     def __init__(
         self,
         name: str,
         handler: CommandHandler,
-        positionals: List[Tuple[str, Dict[str, Any]]],
-        optionals: List[Tuple[str, Dict[str, Any]]],
+        positionals: List[
+            Union[
+                Tuple[str, Dict[str, Any]],
+                CommandArgument,
+            ]
+        ],
+        optionals: List[
+            Union[
+                Tuple[str, Dict[str, Any]],
+                CommandArgument,
+            ]
+        ],
         deprecated: Optional[bool] = None,
+        description: Optional[str] = None,
     ) -> None:
         self.name = name
         self.handler = handler  # type: ignore
         self.positionals = positionals
         self.optionals = optionals
         self.deprecated = deprecated
+        self.description = description
 
 
 def command(
     name: str,
     handler: CommandHandler,
-    positionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
-    optionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
+    positionals: Optional[
+        List[
+            Union[
+                Tuple[str, Dict[str, Any]],
+                CommandArgument,
+            ]
+        ]
+    ] = None,
+    optionals: Optional[
+        List[
+            Union[
+                Tuple[str, Dict[str, Any]],
+                CommandArgument,
+            ]
+        ]
+    ] = None,
     deprecated: Optional[bool] = None,
+    description: Optional[str] = None,
 ) -> Command:
     return Command(
         name=name,
@@ -80,6 +137,7 @@ def command(
         positionals=positionals or [],
         optionals=optionals or [],
         deprecated=deprecated,
+        description=description,
     )
 
 
@@ -90,6 +148,12 @@ CommandExceptionHandler = Callable[
 ]
 
 CommandHook = Callable[['Application'], Union[None, Awaitable[None]]]
+
+ArgumentState = Union[
+    State,
+    Dict[str, Any],
+    Callable[[], Union[State, Dict[str, Any]]],
+]
 
 
 class Application:
@@ -122,7 +186,7 @@ class Application:
         on_shutdown: Optional[Sequence[CommandHook]] = None,
         on_cleanup: Optional[Sequence[CommandHook]] = None,
         deprecated: Optional[bool] = None,
-        state: Optional[Union[State, Dict[str, Any]]] = None,
+        state: Optional[ArgumentState] = None,
     ) -> None:
         self._parser = ArgumentParser(
             description=description,
@@ -160,7 +224,7 @@ class Application:
         self._on_cleanup = [] if on_cleanup is None else list(on_cleanup)
         self._deprecated = bool(deprecated)
         self._dependencies_cached = {}
-        self._state = State(state or {}) if not isinstance(state, State) else state
+        self._set_state(state or State())
 
     async def __call__(self, args: List[str]) -> int:
         exit_code: Optional[int] = self._exit_code
@@ -219,8 +283,8 @@ class Application:
                 Command(
                     name=name,
                     handler=handler,
-                    positionals=positionals or [],
-                    optionals=optionals or [],
+                    positionals=positionals or [],  # type: ignore
+                    optionals=optionals or [],  # type: ignore
                     deprecated=deprecated,
                 )
             )
@@ -305,8 +369,13 @@ class Application:
         if cmd.deprecated is None:
             cmd.deprecated = self._deprecated
         self._commands[cmd.name] = cmd
-        parser = ArgumentParser(prog=cmd.name)
-        _ = [parser.add_argument(arg[0], **arg[1]) for arg in cmd.positionals + cmd.optionals]
+        parser = ArgumentParser(description=cmd.description, prog=cmd.name, prefix_chars='-')
+        args = cmd.positionals + cmd.optionals
+        for arg in args:
+            if isinstance(arg, CommandArgument):
+                arg = (arg.name_or_flags, arg._asdict())  # type: ignore
+                del arg[1]['name_or_flags']  # type: ignore
+            parser.add_argument(arg[0], **arg[1])  # type: ignore
         self._parsers[cmd.name] = parser
         self._update_parser_description(cmd.name)
 
@@ -431,6 +500,16 @@ class Application:
             )
         )
         return await resolve_function(exception_handler, err, cmd, kwargs)
+
+    def _set_state(self, state: ArgumentState) -> None:
+        if isinstance(state, State):
+            self._state = state
+        elif isinstance(state, dict):
+            self._state = State(state)
+        elif callable(state):
+            self._state = state()  # type: ignore
+        else:
+            self._state = State()
 
     def _log(self, msg: str) -> None:
         if self._debug:
