@@ -12,6 +12,8 @@ __all__ = (
     'aws_run_app',
     'az_run_app',
     'gcp_run_app',
+    'alibaba_run_app',
+    'oracle_run_app',
 )
 
 
@@ -39,3 +41,5 @@ def _cloud_run_app(
 aws_run_app = _cloud_run_app
 az_run_app = _cloud_run_app
 gcp_run_app = _cloud_run_app
+alibaba_run_app = _cloud_run_app
+oracle_run_app = _cloud_run_app

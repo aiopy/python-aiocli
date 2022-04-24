@@ -34,8 +34,8 @@ def test_application_include_router() -> None:
     assert app.get_command(name='one-of-root')
     assert app.get_command(name='one-of-child')
 
-    assert app.on_startup[0] is root_hooks['on_startup'][0]
-    assert app.on_startup[1] is router_hooks['on_startup'][0]
+    assert app.on_startup[1] is root_hooks['on_startup'][0]
+    assert app.on_startup[2] is router_hooks['on_startup'][0]
     assert app.on_shutdown[0] is root_hooks['on_shutdown'][0]
     assert app.on_shutdown[1] is router_hooks['on_shutdown'][0]
     assert app.on_cleanup[0] is root_hooks['on_cleanup'][0]

@@ -1,4 +1,4 @@
-> The State in `aiocli` allows us to keep our dependencies in the application and modify it (if necessary) wherever we want.
+> El State en `aiocli` nos permite mantener nuestras dependencias en la aplicación y modificarlo (si es necesario) dónde queramos.
 
 ```python
 from aiocli.commander import Application, run_app

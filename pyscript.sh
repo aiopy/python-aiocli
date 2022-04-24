@@ -8,6 +8,7 @@ _help() {
 Commands:
   install                             Install Python dependencies
   build                               Build Python application
+  build-docs                          Build Python application docs
   deploy                              Deploy Python application
   fmt                                 Format Python code
   security-analysis                   Analyze security of Python code
