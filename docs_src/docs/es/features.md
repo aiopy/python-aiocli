@@ -30,6 +30,10 @@
 
 - A medida: Decorando la función `run_app` y cambiando los valores de los argumentos por defecto. *¿Algo más?*
 
+### Soporte de Estado
+
+- Permite tener un contenedor para compartir entre comandos. *Sin complicarse.*
+
 ### Soporte para Tests
 
 - Provee `TestCommander` y `TestClient` como utilidades. *No hay más excusas para no hacer tests.*

@@ -30,6 +30,10 @@
 
 - Custom: Wrapping `run_app` function and changing default argument values. *Anything else?*
 
+### State support
+
+- Allow to have a container to share between commands. *No complications.*
+
 ### Test support
 
 - Provides `TestCommander` and `TestClient` utilities. *No more excuses not to test.*

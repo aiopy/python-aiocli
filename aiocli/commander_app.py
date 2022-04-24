@@ -81,6 +81,7 @@ class Command:
     ]
     deprecated: Optional[bool]
     description: Optional[str]
+    usage: Optional[str]
 
     def __init__(
         self,
@@ -100,6 +101,7 @@ class Command:
         ],
         deprecated: Optional[bool] = None,
         description: Optional[str] = None,
+        usage: Optional[str] = None,
     ) -> None:
         self.name = name
         self.handler = handler  # type: ignore
@@ -107,6 +109,7 @@ class Command:
         self.optionals = optionals
         self.deprecated = deprecated
         self.description = description
+        self.usage = usage
 
 
 def command(
@@ -130,6 +133,7 @@ def command(
     ] = None,
     deprecated: Optional[bool] = None,
     description: Optional[str] = None,
+    usage: Optional[str] = None,
 ) -> Command:
     return Command(
         name=name,
@@ -138,10 +142,11 @@ def command(
         optionals=optionals or [],
         deprecated=deprecated,
         description=description,
+        usage=usage,
     )
 
 
-CommandMiddleware = Callable[[Command, Dict[str, Any]], Union[Callable[[Any], None], Coroutine[Any, Any, None]]]
+CommandMiddleware = Callable[[Command, Dict[str, Any]], Union[None, Coroutine[Any, Any, None]]]
 
 CommandExceptionHandler = Callable[
     [BaseException, Command, Dict[str, Any]], Union[Optional[int], Coroutine[Any, Any, Optional[int]]]
@@ -169,7 +174,8 @@ class Application:
     _on_cleanup: List[CommandHook]
     _deprecated: bool
     _dependencies_cached: Dict[Any, Any]
-    _state: State
+    _app_state: State
+    _default_command: str
 
     def __init__(
         self,
@@ -187,7 +193,9 @@ class Application:
         on_cleanup: Optional[Sequence[CommandHook]] = None,
         deprecated: Optional[bool] = None,
         state: Optional[ArgumentState] = None,
+        default_command: Optional[str] = None,
     ) -> None:
+        self._app_state = State()
         self._parser = ArgumentParser(
             description=description,
             prog=title,
@@ -212,24 +220,31 @@ class Application:
         self._commands = {
             '-h': self_command('-h'),
             '--help': self_command('--help'),
-            '-v': self_command('--version'),
+            '-v': self_command('-v'),
             '--version': self_command('--version'),
         }
         self.add_commands([] if commands is None else commands)
+        self._default_command = default_command or '-h'
         self._exit_code = default_exit_code
         self._middleware = [] if middleware is None else list(middleware)
         self._exception_handlers = {} if exception_handlers is None else exception_handlers
-        self._on_startup = [] if on_startup is None else list(on_startup)
+
+        async def self_startup(app_: 'Application') -> None:
+            app_.set_state(state=state or State())
+
+        self._on_startup = [self_startup, *([] if on_startup is None else list(on_startup))]
         self._on_shutdown = [] if on_shutdown is None else list(on_shutdown)
         self._on_cleanup = [] if on_cleanup is None else list(on_cleanup)
         self._deprecated = bool(deprecated)
         self._dependencies_cached = {}
-        self._set_state(state or State())
 
     async def __call__(self, args: List[str]) -> int:
         exit_code: Optional[int] = self._exit_code
         try:
-            exit_code = await self._execute_command(name=args[0] if len(args) > 0 else '-h', args=args[1:])
+            exit_code = await self._execute_command(
+                name=args[0] if len(args) > 0 else self._default_command,
+                args=args[1:],
+            )
         except SystemExit as err:
             exit_code = err.code
         finally:
@@ -263,7 +278,7 @@ class Application:
         for middleware in router._middleware:
             self._middleware.append(middleware)
         self._exception_handlers.update(router._exception_handlers)
-        for on_startup in router._on_startup:
+        for on_startup in router._on_startup[1:]:
             self._on_startup.append(on_startup)
         for on_shutdown in router._on_shutdown:
             self._on_shutdown.append(on_shutdown)
@@ -277,6 +292,8 @@ class Application:
         positionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
         optionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
         deprecated: Optional[bool] = None,
+        description: Optional[str] = None,
+        usage: Optional[str] = None,
     ) -> Callable[[CommandHandler], CommandHandler]:
         def decorator(handler: CommandHandler) -> CommandHandler:
             self._add_command(
@@ -286,6 +303,8 @@ class Application:
                     positionals=positionals or [],  # type: ignore
                     optionals=optionals or [],  # type: ignore
                     deprecated=deprecated,
+                    description=description,
+                    usage=usage,
                 )
             )
             return handler
@@ -335,7 +354,7 @@ class Application:
 
     @property
     def state(self) -> State:
-        return self._state
+        return self._app_state
 
     @property
     def exit_code(self) -> int:
@@ -369,7 +388,14 @@ class Application:
         if cmd.deprecated is None:
             cmd.deprecated = self._deprecated
         self._commands[cmd.name] = cmd
-        parser = ArgumentParser(description=cmd.description, prog=cmd.name, prefix_chars='-')
+        parser = ArgumentParser(
+            add_help=self._parser.add_help,
+            description=cmd.description,
+            formatter_class=self._parser.formatter_class,
+            prefix_chars=self._parser.prefix_chars,
+            prog=cmd.name,
+            usage=cmd.usage,
+        )
         args = cmd.positionals + cmd.optionals
         for arg in args:
             if isinstance(arg, CommandArgument):
@@ -393,12 +419,20 @@ class Application:
                     ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()]),
                 )
             )
-            _ = await resolve_function(handler, cmd, kwargs)
+            _ = await resolve_function(
+                *([handler] if len(signature(handler).parameters) == 0 else [handler, cmd, kwargs])  # type: ignore
+            )
 
     async def _execute_command_hooks(self, command_hooks: List[CommandHook]) -> None:
         for hook in command_hooks:
-            self._log(msg='Executing hook {0}...'.format(type(hook)))
-            _ = await resolve_function(hook, self)
+            self._log(
+                msg='Executing hook "{0}" ({1})'.format(
+                    hook.__name__ if hasattr(hook, '__name__') else 'unknown', id(hook)
+                )
+            )
+            _ = await resolve_function(
+                *([hook] if len(signature(hook).parameters) == 0 else [hook, self])  # type: ignore
+            )
 
     def _update_parser_description(self, name: str) -> None:
         self._parser.description = '{0}{1}\n'.format(self._parser.description, name)
@@ -467,7 +501,7 @@ class Application:
                 self._dependencies_cached.update({value.dependency: new_value})
             value = new_value
         elif isinstance(annotation, State) or issubclass(annotation, State):
-            value = self._state
+            value = self._app_state
         return value
 
     async def _execute_command_handler(self, handler: CommandHandler, kwargs: Dict[str, Any]) -> int:
@@ -501,17 +535,19 @@ class Application:
         )
         return await resolve_function(exception_handler, err, cmd, kwargs)
 
-    def _set_state(self, state: ArgumentState) -> None:
+    def set_state(self, state: ArgumentState) -> None:
         if isinstance(state, State):
-            self._state = state
+            state_ = state
         elif isinstance(state, dict):
-            self._state = State(state)
+            state_ = State(state)
         elif callable(state):
-            self._state = state()  # type: ignore
+            state_ = state()  # type: ignore
         else:
-            self._state = State()
+            state_ = State()
+
+        self._app_state = state_
 
     def _log(self, msg: str) -> None:
         if self._debug:
-            # print(msg)
+            print(msg)
             logger.debug(msg)

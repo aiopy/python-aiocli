@@ -4,6 +4,7 @@
 
 * Add State.
 * Add CommandArgument based on argparse.add_argument function args.
+* More Serverless wrappers (alibaba and oracle) added.
 * Improve debug traces.
 * Improve docs.
 
