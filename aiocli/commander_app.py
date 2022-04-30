@@ -549,5 +549,5 @@ class Application:
 
     def _log(self, msg: str) -> None:
         if self._debug:
-            print(msg)
+            # print(msg)
             logger.debug(msg)
