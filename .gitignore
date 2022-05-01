@@ -7,7 +7,6 @@
 # Internal
 *.egg-info/
 .coverage
-.env.local
 .gitignore
 .python-version
 *.pyc
