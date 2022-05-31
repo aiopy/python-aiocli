@@ -45,28 +45,20 @@ _deploy() {
 }
 
 _fmt() {
-  python3 -m autoflake --in-place --remove-all-unused-imports --remove-unused-variables --recursive "$project" tests
+  # https://github.com/quwac/pyproject-autoflake/pull/2
+  pautoflake "$project" tests
   python3 -m black "$project" tests
   python3 -m isort "$project" tests
 }
 
 _security_analysis() {
   python3 -m liccheck -r requirements-dev.txt
-  python3 -m bandit -s B101,B311 -r "$project"
+  python3 -m bandit -r "$project"
 }
 
 _static_analysis() {
   shellcheck pyscript.sh
-  python3 -m mypy \
-    --strict \
-    --allow-subclassing-any \
-    --allow-untyped-decorators \
-    --no-warn-return-any \
-    --follow-imports=skip \
-    --ignore-missing-imports \
-    --allow-any-generics \
-    --cache-dir=var/cache/.mypy_cache \
-    "$project"
+  python3 -m mypy "$project"
   python3 -m pylint "$project"
 }
 
@@ -75,13 +67,11 @@ _test() {
 }
 
 _coverage() {
-  python3 -m pytest --cov-report=html:var/log/.pytest_coverage --cov="${project}" --cov-fail-under=70 tests
-  rm -rf .coverage &
+  python3 -m pytest --cov --cov-report=html
 }
 
 _clean() {
-  find . \( -name "__pycache__" -o -name "*.pyc" \) -print0 | xargs -0 rm -rf
-  rm -rf build dist var
+  find . \( -name "__pycache__" -o -name "*.pyc" -o -type d -name "dist" -o -type d -name "var" \) -print0 | xargs -0 rm -rf
 }
 
 main() {

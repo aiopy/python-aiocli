@@ -14,6 +14,7 @@ from typing import (
     Tuple,
     Type,
     Union,
+    cast,
 )
 
 __all__ = (
@@ -33,7 +34,7 @@ from .logger import logger
 CommandHandler = Callable[..., Union[Callable[[Any], Optional[int]], Coroutine[Any, Any, Optional[int]]]]
 
 
-class State(dict):
+class State(Dict[str, Any]):
     pass
 
 
@@ -270,11 +271,12 @@ class Application:
 
     def include_router(self, router: 'Application') -> None:
         for name, cmd in router._commands.items():
-            if cmd.deprecated is None:
-                cmd.deprecated = self._deprecated
-            self._commands[name] = cmd
-            self._parsers[name] = router._parsers[name]
-            self._update_parser_description(name)
+            if name not in self._commands:
+                if cmd.deprecated is None:
+                    cmd.deprecated = self._deprecated
+                self._commands[name] = cmd
+                self._parsers[name] = router._parsers[name]
+                self._update_parser_description(name)
         for middleware in router._middleware:
             self._middleware.append(middleware)
         self._exception_handlers.update(router._exception_handlers)
@@ -510,7 +512,7 @@ class Application:
                 ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()])
             ),
         )
-        return await resolve_function(handler, **kwargs)
+        return cast(int, await resolve_function(handler, **kwargs))
 
     async def _execute_command_exception_handler(
         self,
@@ -533,7 +535,7 @@ class Application:
                 ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()]),
             )
         )
-        return await resolve_function(exception_handler, err, cmd, kwargs)
+        return cast(Optional[int], await resolve_function(exception_handler, err, cmd, kwargs))
 
     def set_state(self, state: ArgumentState) -> None:
         if isinstance(state, State):

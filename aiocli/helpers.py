@@ -5,7 +5,7 @@ from typing import Any, Callable, Optional, Set
 
 
 def all_tasks(loop: Optional[asyncio.AbstractEventLoop] = None) -> Set["asyncio.Task[Any]"]:
-    tasks = list(asyncio.Task.all_tasks(loop))
+    tasks = list(getattr(asyncio.Task, 'all_tasks')(loop))
     return {t for t in tasks if not t.done()}
 
 

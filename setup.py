@@ -7,7 +7,7 @@ with open('pyproject.toml', 'rb') as file:
 with open('README.md', 'r') as file:
     long_description = file.read()
 
-author = metadata['authors'][0].split(' ')[0]
+__author__ = ', '.join(metadata['authors'])
 
 setup(
     name=metadata['name'],
@@ -16,8 +16,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     license=metadata['license'],
-    author=author,
-    author_email=metadata['authors'][0].split(' ')[1],
+    author=__author__,
     url=metadata['repository'],
     documentation=metadata['documentation'],
     classifiers=metadata['classifiers'],

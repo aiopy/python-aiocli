@@ -1,9 +1,9 @@
 import asyncio
 import signal
 import sys
-from asyncio import gather, get_event_loop, iscoroutine
+from asyncio import gather, get_event_loop
 from asyncio.events import AbstractEventLoop
-from typing import Any, Awaitable, Callable, List, Optional, Set, Union, cast
+from typing import Any, Callable, List, Optional, Set, Union
 
 from aiocli.commander_app import (
     Application,
@@ -109,14 +109,13 @@ class AppRunner:
 
 
 async def _run_app(
-    app: Union[Application, Awaitable[Application]],
+    app: Application,
     *,
     loop: AbstractEventLoop,
     handle_signals: bool = True,
     argv: Optional[List[str]] = None,
     exit_code: bool = True,
 ) -> None:
-    app = cast(Application, await app if iscoroutine(app) else app)  # type: ignore
     runner = AppRunner(app, loop=loop, handle_signals=handle_signals, exit_code=exit_code)
     await runner.setup()
     try:
@@ -131,7 +130,7 @@ ApplicationReturn = Union[int, None, Callable[..., Optional[int]]]
 
 
 def run_app(
-    app: Union[Application, Awaitable[Application]],
+    app: Application,
     *,
     loop: Optional[AbstractEventLoop] = None,
     handle_signals: bool = True,
@@ -161,6 +160,6 @@ def run_app(
                 loop_.run_until_complete(loop_.shutdown_asyncgens())
             if close_loop and not loop_.is_closed():
                 loop_.close()
-        return cast(Application, app).exit_code
+        return app.exit_code
 
     return wrapper() if parser is None else wrapper
