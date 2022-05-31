@@ -1,6 +1,6 @@
 [metadata]
 name = "aiocli"
-version = "1.6.3"
+version = "1.6.4"
 description = "Simple and lightweight async console runner."
 license = "MIT"
 authors = ["ticdenis <denisnavarroalcaide@outlook.es>", "yasti4 <adria_4_@hotmail.com>"]
