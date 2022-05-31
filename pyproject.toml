@@ -3,10 +3,7 @@ name = "aiocli"
 version = "1.6.3"
 description = "Simple and lightweight async console runner."
 license = "MIT"
-authors = [
-    "ticdenis <denisnavarroalcaide@outlook.es>",
-    "yasti4 <adria_4_@hotmail.com>"
-]
+authors = ["ticdenis <denisnavarroalcaide@outlook.es>", "yasti4 <adria_4_@hotmail.com>"]
 readme = "README.md"
 repository = "https://github.com/aiopy/python-aiocli"
 documentation = "https://aiopy.github.io/python-aiocli/"
