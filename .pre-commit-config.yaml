@@ -4,17 +4,17 @@ repos:
     hooks:
       - id: fmt
         name: fmt
-        entry: sh pyscript.sh fmt
+        entry: python3 run-script fmt
         language: system
         stages: [ commit-msg ]
       - id: security-analysis
         name: security-analysis
-        entry: sh pyscript.sh security-analysis
+        entry: python3 run-script security-analysis
         language: system
         stages: [ commit-msg ]
       - id: static-analysis
         name: static-analysis
-        entry: sh pyscript.sh static-analysis
+        entry: python3 run-script static-analysis
         language: system
         stages: [ commit-msg ]
   - repo: https://github.com/pre-commit/pre-commit-hooks

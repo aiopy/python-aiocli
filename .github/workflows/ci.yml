@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+
+  CI:
+    timeout-minutes: 15
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        python-version: [ '3.7', '3.8', '3.9', '3.10' ]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: deps
+        timeout-minutes: 5
+        run: python3 run-script dev-install
+      - name: security-analysis
+        timeout-minutes: 1
+        run: python3 run-script security-analysis
+      - name: static-analysis
+        timeout-minutes: 3
+        run: python3 run-script static-analysis
+      - name: test
+        timeout-minutes: 5
+        run: python3 run-script test
+      - name: clean
+        timeout-minutes: 1
+        run: python3 run-script clean

@@ -26,7 +26,7 @@ class TestCommander:
         timeout_exit_code: Optional[int] = None,
     ) -> int:
         try:
-            await wait_for(self._app.__call__(argv or sys.argv[1:]), timeout=timeout)
+            await wait_for(self._app(argv or sys.argv[1:]), timeout=timeout)
         except TimeoutError:
             if timeout_exit_code is not None:
                 return timeout_exit_code

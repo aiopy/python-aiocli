@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+from subprocess import run
+from sys import argv
+
+try:
+    from tomllib import loads  # Python 3.11+
+except ModuleNotFoundError:
+    try:
+        from tomli import loads
+    except ModuleNotFoundError:
+        run(['python3 -m pip install -U tomli'], stdout=-3, shell=True)
+        from tomli import loads
+
+argv = argv if len(argv) > 1 else [argv[0], '-h']
+with open('pyproject.toml') as file:
+    scripts = loads(file.read()).get('tool', {}).get('run-script', {})
+
+if argv[1] in ['-h', '--help']:
+    commands = (chr(10) + '  ').join(scripts.keys())
+    print("Usage: {0} [COMMAND]\n\nCommands:\n  {1}\n\nOptions:\n  -h,--help".format(argv[0], commands))
+    exit(0)
+
+script = scripts.get(argv[1])
+if not script:
+    print('Missing command!')
+    exit(1)
+
+exit(run(script, shell=True).returncode)

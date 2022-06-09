@@ -6,11 +6,10 @@
 
 # Internal
 *.egg-info/
-.coverage
-.gitignore
-.python-version
 *.pyc
 __pycache__/
 build/
 dist/
+requirements-dev.txt
+requirements.txt
 var/
