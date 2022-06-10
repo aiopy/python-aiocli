@@ -117,11 +117,19 @@ async def _run_app(
     exit_code: bool = True,
 ) -> None:
     runner = AppRunner(app, loop=loop, handle_signals=handle_signals, exit_code=exit_code)
-    await runner.setup()
-    try:
-        await app(argv or sys.argv[1:])
-    finally:
-        await runner.cleanup()
+    args = argv or sys.argv[1:]
+    if app.should_ignore_hooks(args):
+        try:
+            await app(args)
+        finally:
+            if exit_code:
+                app.exit()
+    else:
+        await runner.setup()
+        try:
+            await app(args)
+        finally:
+            await runner.cleanup()
 
 
 ApplicationParser = Callable[..., Optional[List[str]]]
