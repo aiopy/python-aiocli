@@ -113,7 +113,7 @@ dependencies = true
 
 [tool.mypy]
 strict = true
-cache_dir = "var/cache/.mypy_cache"
+cache_dir = "var/mypy"
 
 [tool.pylint.master]
 jobs = "0"
@@ -128,23 +128,11 @@ testpaths = ["tests"]
 [tool.run-script]
 install = "python3 -m pip install ."
 dev-install = "python3 -m pip install .[dev,deploy,docs,fmt,security-analysis,static-analysis,test]"
-deploy = """
-python3 -m build --no-isolation --wheel --sdist
-python3 -m twine upload dist/*
-"""
+deploy = "python3 -m build --no-isolation && python3 -m twine upload dist/*"
 docs = "python3 -m mkdocs build -f ./docs_src/mkdocs.yml -d ./docs"
-fmt = """
-python3 -m black aiocli tests
-python3 -m isort aiocli tests
-"""
-security-analysis = """
-python3 -m liccheck
-python3 -m bandit -s B101,B311 -r aiocli
-"""
-static-analysis = """
-python3 -m mypy aiocli
-python3 -m pylint aiocli
-"""
+fmt = "python3 -m black aiocli tests && python3 -m isort aiocli tests"
+security-analysis = "python3 -m liccheck && python3 -m bandit -s B101,B311 -r aiocli"
+static-analysis = "python3 -m mypy aiocli && python3 -m pylint aiocli"
 test = "python3 -m pytest"
 unit-tests = "python3 -m pytest tests/unit"
 integration-tests = "python3 -m pytest tests/integration"

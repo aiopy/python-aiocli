@@ -25,4 +25,4 @@ if not script:
     print('Missing command!')
     exit(1)
 
-exit(run(script, shell=True).returncode)
+exit(run(script + ' '.join(argv[2:]), shell=True).returncode)

@@ -1,4 +1,5 @@
 from argparse import Action, ArgumentParser, RawTextHelpFormatter
+from dataclasses import dataclass, field
 from inspect import signature
 from typing import (
     Any,
@@ -64,7 +65,7 @@ class CommandArgument(NamedTuple):
     dest: Optional[str] = None
 
 
-# dataclass
+@dataclass
 class Command:
     name: str
     handler: CommandHandler
@@ -73,44 +74,17 @@ class Command:
             Tuple[str, Dict[str, Any]],
             CommandArgument,
         ]
-    ]
+    ] = field(default_factory=list)
     optionals: List[
         Union[
             Tuple[str, Dict[str, Any]],
             CommandArgument,
         ]
-    ]
-    deprecated: Optional[bool]
-    description: Optional[str]
-    usage: Optional[str]
-
-    def __init__(
-        self,
-        name: str,
-        handler: CommandHandler,
-        positionals: List[
-            Union[
-                Tuple[str, Dict[str, Any]],
-                CommandArgument,
-            ]
-        ],
-        optionals: List[
-            Union[
-                Tuple[str, Dict[str, Any]],
-                CommandArgument,
-            ]
-        ],
-        deprecated: Optional[bool] = None,
-        description: Optional[str] = None,
-        usage: Optional[str] = None,
-    ) -> None:
-        self.name = name
-        self.handler = handler  # type: ignore
-        self.positionals = positionals
-        self.optionals = optionals
-        self.deprecated = deprecated
-        self.description = description
-        self.usage = usage
+    ] = field(default_factory=list)
+    deprecated: Optional[bool] = None
+    description: Optional[str] = None
+    usage: Optional[str] = None
+    ignore_hooks: bool = False
 
 
 def command(
@@ -216,7 +190,7 @@ class Application:
                 _ = self._parser.parse_args([name])
                 return default_exit_code
 
-            return Command(name=name, handler=self_handler, positionals=[], optionals=[], deprecated=False)
+            return Command(name=name, handler=self_handler, deprecated=False, ignore_hooks=True)
 
         self._commands = {
             '-h': self_command('-h'),
@@ -310,22 +284,32 @@ class Application:
         deprecated: Optional[bool] = None,
         description: Optional[str] = None,
         usage: Optional[str] = None,
+        ignore_hooks: bool = False,
     ) -> Callable[[CommandHandler], CommandHandler]:
         def decorator(handler: CommandHandler) -> CommandHandler:
             self._add_command(
                 Command(
                     name=name,
                     handler=handler,
-                    positionals=positionals or [],  # type: ignore
-                    optionals=optionals or [],  # type: ignore
+                    positionals=positionals or [],
+                    optionals=optionals or [],
                     deprecated=deprecated,
                     description=description,
                     usage=usage,
+                    ignore_hooks=ignore_hooks,
                 )
             )
             return handler
 
         return decorator
+
+    def should_ignore_hooks(self, args: List[str]) -> bool:
+        cmd: Optional[Command] = None
+        if len(args) > 0:
+            cmd = self.get_command(name=args[0])
+        if not cmd:
+            cmd = self.get_command(name=self._default_command)
+        return not cmd or cmd.ignore_hooks
 
     def add_commands(self, commands: Sequence[Command]) -> None:
         for cmd in commands:
