@@ -291,8 +291,22 @@ class Application:
         self,
         name: str,
         *,
-        positionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
-        optionals: Optional[List[Tuple[str, Dict[str, Any]]]] = None,
+        positionals: Optional[
+            List[
+                Union[
+                    Tuple[str, Dict[str, Any]],
+                    CommandArgument,
+                ]
+            ]
+        ] = None,
+        optionals: Optional[
+            List[
+                Union[
+                    Tuple[str, Dict[str, Any]],
+                    CommandArgument,
+                ]
+            ]
+        ] = None,
         deprecated: Optional[bool] = None,
         description: Optional[str] = None,
         usage: Optional[str] = None,
