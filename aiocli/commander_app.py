@@ -34,7 +34,7 @@ from .logger import logger
 CommandHandler = Callable[..., Union[Callable[[Any], Optional[int]], Coroutine[Any, Any, Optional[int]]]]
 
 
-class State(Dict[str, Any]):
+class State(Dict[Any, Any]):
     pass
 
 
