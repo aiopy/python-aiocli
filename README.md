@@ -1,5 +1,10 @@
 # Async cli client/commander framework
 
+
+[![PyPI version](https://badge.fury.io/py/aiocli.svg)](https://badge.fury.io/py/aiocli)
+[![PyPIDownloads](https://static.pepy.tech/badge/aiocli)](https://pepy.tech/project/aiocli)
+[![CIPassing](https://github.com/aiopy/python-aiocli/actions/workflows/ci.yml/badge.svg)](https://github.com/aiopy/python-aiocli/actions/runs/2475237234)
+
 aiocli is a Python library for simple and lightweight async console runner.
 
 Full compatibility with argparse module and highly inspired by aiohttp module.
