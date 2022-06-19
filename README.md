@@ -1,6 +1,5 @@
 # Async cli client/commander framework
 
-
 [![PyPI version](https://badge.fury.io/py/aiocli.svg)](https://badge.fury.io/py/aiocli)
 [![PyPIDownloads](https://static.pepy.tech/badge/aiocli)](https://pepy.tech/project/aiocli)
 [![CI](https://github.com/aiopy/python-aiocli/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/aiopy/python-aiocli/actions/workflows/ci.yml)
