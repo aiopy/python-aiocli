@@ -3,7 +3,7 @@
 
 [![PyPI version](https://badge.fury.io/py/aiocli.svg)](https://badge.fury.io/py/aiocli)
 [![PyPIDownloads](https://static.pepy.tech/badge/aiocli)](https://pepy.tech/project/aiocli)
-[![CIPassing](https://github.com/aiopy/python-aiocli/actions/workflows/ci.yml/badge.svg)](https://github.com/aiopy/python-aiocli/actions/runs/2475237234)
+[![CI](https://github.com/aiopy/python-aiocli/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/aiopy/python-aiocli/actions/workflows/ci.yml)
 
 aiocli is a Python library for simple and lightweight async console runner.
 
