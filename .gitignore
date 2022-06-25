@@ -10,8 +10,6 @@
 __pycache__/
 build/
 dist/
-docs_src/generated/en
-docs_src/generated/es
 requirements-dev.txt
 requirements.txt
 var/
