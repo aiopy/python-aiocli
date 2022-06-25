@@ -1,0 +1,61 @@
+copyright: 'Copyright &copy; 2020 - 2022'
+
+docs_dir: '../../docs/en'
+
+extra:
+  alternate:
+    - lang: en
+    - link: /python-aiocli/en/
+      name: English
+    - link: /python-aiocli/es/
+      name: Spanish
+      lang: es
+  generator: false
+  social:
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/denisnavarroalcaide
+    - icon: fontawesome/brands/github
+      link: https://github.com/aiopy
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+nav:
+  - aiocli: index.md
+  - features.md
+  - Advanced User Guide:
+      - advanced/serverless_support.md
+      - advanced/test_support.md
+      - advanced/middleware.md
+      - advanced/exception_handler.md
+      - advanced/hooks.md
+      - advanced/state.md
+  - release-notes.md
+
+plugins:
+  - search:
+      lang: en
+
+repo_name: 'aiopy/python-aiocli'
+repo_url: 'https://github.com/aiopy/python-aiocli'
+
+site_description: 'Simple and lightweight async console runner'
+site_dir: '../../generated/en'
+site_name: 'aiocli'
+site_url: 'https://aiopy.github.io/python-aiocli/'
+
+theme:
+  features:
+    - search.suggest
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github-alt
+  language: en
+  name: material
+  palette:
+    - accent: pink
+      primary: red
+      scheme: default
