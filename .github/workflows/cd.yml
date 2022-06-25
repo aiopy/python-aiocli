@@ -30,7 +30,7 @@ jobs:
         run: |
           git config user.name ${{ github.actor }}
           git commit . -m "release: v${VERSION}"
-          git push origin master
+          git push origin main
           git tag $VERSION
           git push origin $VERSION
           python3 run-script deploy
