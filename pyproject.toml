@@ -87,6 +87,9 @@ include = ["aiocli*"]
 [tool.setuptools.package-data]
 "aiocli" = ["py.typed"]
 
+[tool.bandit]
+skips = ["B101", "B311"]
+
 [tool.black]
 include = '\.pyi?$'
 line-length = 120
@@ -131,7 +134,7 @@ dev-install = "python3 -m pip install .[dev,deploy,docs,fmt,security-analysis,st
 deploy = "python3 -m build --no-isolation && python3 -m twine upload dist/*"
 docs = "python3 -m mkdocs build -f ./docs_src/mkdocs.yml -d ./docs"
 fmt = "python3 -m black aiocli tests && python3 -m isort aiocli tests"
-security-analysis = "python3 -m liccheck && python3 -m bandit -s B101,B311 -r aiocli"
+security-analysis = "python3 -m liccheck && python3 -m bandit -r . -c pyproject.toml"
 static-analysis = "python3 -m mypy aiocli && python3 -m pylint aiocli"
 test = "python3 -m pytest"
 unit-tests = "python3 -m pytest tests/unit"
