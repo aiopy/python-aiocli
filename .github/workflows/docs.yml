@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: checkout
+      - name: docs
         run: |
           git fetch origin
           git checkout main
@@ -21,9 +21,9 @@ jobs:
         run: python3 run-script dev-install
       - name: docs
         run: |
+          python3 run-script docs
           git checkout gh-pages
           ln -sf docs_src/generated docs
-          python3 run-script docs
           git config user.name ${{ github.actor }}
           git add docs docs_src/generated
           git commit . -m "docs: updated"
