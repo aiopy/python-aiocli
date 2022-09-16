@@ -36,7 +36,7 @@ class TestCommander:
         if self._runner:
             return
         self._runner = await self._make_runner(**kwargs)
-        await self._runner.setup()
+        await self._runner.setup(all_hooks=True)
 
     async def __aenter__(self) -> 'TestCommander':
         await self.start_commander()

@@ -78,7 +78,7 @@ class AppRunner:
     def app(self) -> Application:
         return self._app
 
-    async def setup(self) -> None:
+    async def setup(self, all_hooks: bool = True) -> None:
         if self._handle_signals:
             try:
                 self._loop.add_signal_handler(signal.SIGINT, _raise_graceful_exit)
@@ -86,10 +86,10 @@ class AppRunner:
             except NotImplementedError:  # pragma: no cover
                 # add_signal_handler is not implemented on Windows
                 pass
-        await self.startup()
+        await self.startup(all_hooks=all_hooks)
 
-    async def startup(self) -> None:
-        await self._app.startup()
+    async def startup(self, all_hooks: bool) -> None:
+        await self._app.startup(all_hooks=all_hooks)
 
     async def shutdown(self) -> None:
         await self._app.shutdown()
@@ -119,13 +119,14 @@ async def _run_app(
     runner = AppRunner(app, loop=loop, handle_signals=handle_signals, exit_code=exit_code)
     args = argv or sys.argv[1:]
     if app.should_ignore_hooks(args):
+        await runner.setup(all_hooks=False)
         try:
             await app(args)
         finally:
             if exit_code:
                 app.exit()
     else:
-        await runner.setup()
+        await runner.setup(all_hooks=True)
         try:
             await app(args)
         finally:

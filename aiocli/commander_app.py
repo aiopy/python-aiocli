@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from argparse import Action, ArgumentParser, RawTextHelpFormatter
 from dataclasses import dataclass, field
 from inspect import signature
@@ -136,6 +137,12 @@ ArgumentState = Union[
 ]
 
 
+class InternalCommandHook(ABC):
+    @abstractmethod
+    async def __call__(self, app: 'Application') -> None:
+        pass
+
+
 class Application:
     _parser: ArgumentParser
     _parsers: Dict[str, ArgumentParser]
@@ -204,10 +211,14 @@ class Application:
         self._middleware = [] if middleware is None else list(middleware)
         self._exception_handlers = {} if exception_handlers is None else exception_handlers
 
-        async def self_startup(app_: 'Application') -> None:
-            app_.set_state(state=state or State())
+        class SelfStartupInternalCommandHook(InternalCommandHook):
+            async def __call__(self, app: 'Application') -> None:
+                app.set_state(state=state or State())
 
-        self._on_startup = [self_startup, *([] if on_startup is None else list(on_startup))]
+        self._on_startup = [
+            SelfStartupInternalCommandHook().__call__,
+            *([] if on_startup is None else list(on_startup)),
+        ]
         self._on_shutdown = [] if on_shutdown is None else list(on_shutdown)
         self._on_cleanup = [] if on_cleanup is None else list(on_cleanup)
         self._deprecated = bool(deprecated)
@@ -367,8 +378,8 @@ class Application:
     def on_startup(self) -> List[CommandHook]:
         return self._on_startup
 
-    async def startup(self) -> None:
-        await self._execute_command_hooks(self.on_startup)
+    async def startup(self, all_hooks: bool = True) -> None:
+        await self._execute_command_hooks(self.on_startup, all_hooks)
 
     @property
     def on_shutdown(self) -> List[CommandHook]:
@@ -423,8 +434,11 @@ class Application:
                 *([handler] if len(signature(handler).parameters) == 0 else [handler, cmd, kwargs])  # type: ignore
             )
 
-    async def _execute_command_hooks(self, command_hooks: List[CommandHook]) -> None:
-        for hook in command_hooks:
+    async def _execute_command_hooks(self, command_hooks: List[CommandHook], all_hooks: bool = True) -> None:
+        command_hooks_ = (
+            command_hooks if all_hooks else [hook for hook in command_hooks if isinstance(hook, InternalCommandHook)]
+        )
+        for hook in command_hooks_:
             self._log(
                 msg='Executing hook "{0}" ({1})'.format(
                     hook.__name__ if hasattr(hook, '__name__') else 'unknown', id(hook)
