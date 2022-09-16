@@ -216,7 +216,7 @@ class Application:
                 app.set_state(state=state or State())
 
         self._on_startup = [
-            SelfStartupInternalCommandHook().__call__,
+            SelfStartupInternalCommandHook(),
             *([] if on_startup is None else list(on_startup)),
         ]
         self._on_shutdown = [] if on_shutdown is None else list(on_shutdown)
@@ -439,6 +439,8 @@ class Application:
             command_hooks if all_hooks else [hook for hook in command_hooks if isinstance(hook, InternalCommandHook)]
         )
         for hook in command_hooks_:
+            if isinstance(hook, InternalCommandHook):
+                hook = hook.__call__
             self._log(
                 msg='Executing hook "{0}" ({1})'.format(
                     hook.__name__ if hasattr(hook, '__name__') else 'unknown', id(hook)

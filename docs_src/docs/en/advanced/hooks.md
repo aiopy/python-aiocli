@@ -7,6 +7,8 @@ There are 3 types of Hooks:
 * `on_shutdown`: Where you will close connections for example.
 * `on_cleanup`: Where you will free up memory for example.
 
+Internal hooks (like state resolver) will always be executed even if they are ignored on Command definition!
+
 ```python
 from aiocli.commander import Application, run_app
 from aiocli.commander_app import CommandArgument, State
