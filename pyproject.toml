@@ -40,7 +40,7 @@ requires-python = ">=3.7"
 
 [project.optional-dependencies]
 dev = [
-  "pre-commit==2.19.0",
+  "pre-commit==2.20.0",
   'tomli==2.0.1; python_version<"3.11"',
 ]
 deploy = [

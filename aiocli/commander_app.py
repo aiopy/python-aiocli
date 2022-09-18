@@ -176,6 +176,7 @@ class Application:
         deprecated: Optional[bool] = None,
         state: Optional[ArgumentState] = None,
         default_command: Optional[str] = None,
+        routers: Optional[Sequence['Application']] = None,
     ) -> None:
         self._app_state = State()
         self._parser = ArgumentParser(
@@ -223,6 +224,7 @@ class Application:
         self._on_cleanup = [] if on_cleanup is None else list(on_cleanup)
         self._deprecated = bool(deprecated)
         self._dependencies_cached = {}
+        self.include_routers([] if routers is None else routers)
 
     async def __call__(self, args: List[str]) -> int:
         exit_code: Optional[int] = self._exit_code
@@ -271,6 +273,10 @@ class Application:
             self._on_shutdown.append(on_shutdown)
         for on_cleanup in router._on_cleanup:
             self._on_cleanup.append(on_cleanup)
+
+    def include_routers(self, routers: Sequence['Application']) -> None:
+        for router in routers:
+            self.include_router(router=router)
 
     def command(
         self,
