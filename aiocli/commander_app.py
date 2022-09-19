@@ -178,7 +178,8 @@ class Application:
         default_command: Optional[str] = None,
         routers: Optional[Sequence['Application']] = None,
     ) -> None:
-        self._app_state = State()
+        app_state = State(state) if isinstance(state, Dict) else state if isinstance(state, State) else State()
+        self._app_state = app_state
         self._parser = ArgumentParser(
             description=description,
             prog=title,
@@ -214,7 +215,7 @@ class Application:
 
         class SelfStartupInternalCommandHook(InternalCommandHook):
             async def __call__(self, app: 'Application') -> None:
-                app.set_state(state=state or State())
+                app.set_state(state=state or app_state)
 
         self._on_startup = [
             SelfStartupInternalCommandHook(),
@@ -558,16 +559,12 @@ class Application:
         return cast(Optional[int], await resolve_function(exception_handler, err, cmd, kwargs))
 
     def set_state(self, state: ArgumentState) -> None:
-        if isinstance(state, State):
-            state_ = state
-        elif isinstance(state, dict):
-            state_ = State(state)
-        elif callable(state):
-            state_ = state()  # type: ignore
+        if callable(state):
+            state_ = state()
         else:
-            state_ = State()
+            state_ = self._app_state or State()
 
-        self._app_state = state_
+        self._app_state = state_  # type: ignore
 
     def _log(self, msg: str) -> None:
         if self._debug:
