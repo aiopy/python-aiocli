@@ -30,7 +30,7 @@ __all__ = (
     'Application',
 )
 
-from .helpers import resolve_function
+from .helpers import iscoroutinefunction, resolve_coroutine, resolve_function
 from .logger import logger
 
 CommandHandler = Callable[..., Union[Callable[[Any], Optional[int]], Coroutine[Any, Any, Optional[int]]]]
@@ -130,11 +130,15 @@ CommandExceptionHandler = Callable[
 
 CommandHook = Callable[['Application'], Union[None, Awaitable[None]]]
 
-ArgumentState = Union[
+SyncArgumentState = Union[
     State,
-    Dict[str, Any],
-    Callable[[], Union[State, Dict[str, Any]]],
+    Dict[Any, Any],
+    Callable[[], Union[State, Dict[Any, Any]]],
 ]
+
+AsyncArgumentState = Callable[[], Coroutine[Any, Any, SyncArgumentState]]
+
+ArgumentState = Union[SyncArgumentState, AsyncArgumentState]
 
 
 class InternalCommandHook(ABC):
@@ -156,8 +160,10 @@ class Application:
     _on_cleanup: List[CommandHook]
     _deprecated: bool
     _dependencies_cached: Dict[Any, Any]
-    _app_state: State
+    _app_state: Optional[State]
+    _app_state_resolver: Optional[ArgumentParser]
     _default_command: str
+    _use_print_for_logging: bool
 
     def __init__(
         self,
@@ -177,9 +183,11 @@ class Application:
         state: Optional[ArgumentState] = None,
         default_command: Optional[str] = None,
         routers: Optional[Sequence['Application']] = None,
+        use_print_for_logging: bool = False,
     ) -> None:
-        app_state = State(state) if isinstance(state, Dict) else state if isinstance(state, State) else State()
-        self._app_state = app_state
+        self._use_print_for_logging = use_print_for_logging
+        self._app_state = None  # lazy
+        self._app_state_resolver = state or (lambda: State())  # type: ignore
         self._parser = ArgumentParser(
             description=description,
             prog=title,
@@ -212,15 +220,7 @@ class Application:
         self._exit_code = default_exit_code
         self._middleware = [] if middleware is None else list(middleware)
         self._exception_handlers = {} if exception_handlers is None else exception_handlers
-
-        class SelfStartupInternalCommandHook(InternalCommandHook):
-            async def __call__(self, app: 'Application') -> None:
-                app.set_state(state=state or app_state)
-
-        self._on_startup = [
-            SelfStartupInternalCommandHook(),
-            *([] if on_startup is None else list(on_startup)),
-        ]
+        self._on_startup = [] if on_startup is None else list(on_startup)
         self._on_shutdown = [] if on_shutdown is None else list(on_shutdown)
         self._on_cleanup = [] if on_cleanup is None else list(on_cleanup)
         self._deprecated = bool(deprecated)
@@ -370,9 +370,28 @@ class Application:
     def parser(self) -> ArgumentParser:
         return self._parser
 
+    @classmethod
+    def _resolve_state(cls, state: ArgumentState) -> State:
+        if isinstance(state, State):
+            return state
+        if isinstance(state, Dict):
+            return State(state)
+        if iscoroutinefunction(state):
+            return cls._resolve_state(resolve_coroutine(state))  # type: ignore
+        if callable(state):
+            return cls._resolve_state(state())  # type: ignore
+        return State()
+
+    def set_state(self, state: ArgumentState) -> None:
+        self._app_state = self._resolve_state(state)
+
     @property
     def state(self) -> State:
-        return self._app_state
+        if self._app_state_resolver:
+            self.set_state(self._app_state_resolver or (lambda: State()))  # type: ignore
+            self._app_state_resolver = None
+
+        return self._app_state  # type: ignore
 
     @property
     def exit_code(self) -> int:
@@ -524,7 +543,7 @@ class Application:
                 self._dependencies_cached.update({value.dependency: new_value})
             value = new_value
         elif isinstance(annotation, State) or issubclass(annotation, State):
-            value = self._app_state
+            value = self.state
         return value
 
     async def _execute_command_handler(self, handler: CommandHandler, kwargs: Dict[str, Any]) -> int:
@@ -558,15 +577,9 @@ class Application:
         )
         return cast(Optional[int], await resolve_function(exception_handler, err, cmd, kwargs))
 
-    def set_state(self, state: ArgumentState) -> None:
-        if callable(state):
-            state_ = state()
-        else:
-            state_ = self._app_state or State()
-
-        self._app_state = state_  # type: ignore
-
     def _log(self, msg: str) -> None:
         if self._debug:
-            # print(msg)
-            logger.debug(msg)
+            if self._use_print_for_logging:
+                print(msg)
+            else:
+                logger.debug(msg)

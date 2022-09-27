@@ -458,6 +458,7 @@
 <li><code>on_shutdown</code>: Where you will close connections for example.</li>
 <li><code>on_cleanup</code>: Where you will free up memory for example.</li>
 </ul>
+<p>Internal hooks will always be executed even if they are ignored on Command definition!</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">aiocli.commander</span> <span class="kn">import</span> <span class="n">Application</span><span class="p">,</span> <span class="n">run_app</span>
 <span class="kn">from</span> <span class="nn">aiocli.commander_app</span> <span class="kn">import</span> <span class="n">CommandArgument</span><span class="p">,</span> <span class="n">State</span>
 

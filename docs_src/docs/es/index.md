@@ -1,6 +1,6 @@
 # AIOCLI
 
-Un moderno ligero ejecutor de consola asíncrono para construir CLIs con Python 3.6+ basado en el módulo estándar de Python [argparse](https://docs.python.org/3/library/argparse.html) y [type hints](https://docs.python.org/3/library/typing.html) altamente inspirado en [AIOHTTP](https://github.com/aio-libs/aiohttp) y [FastApi](https://github.com/tiangolo/fastapi).
+Un moderno ligero ejecutor de consola asíncrono para construir CLIs con Python 3.7+ basado en el módulo estándar de Python [argparse](https://docs.python.org/3/library/argparse.html) y [type hints](https://docs.python.org/3/library/typing.html) altamente inspirado en [AIOHTTP](https://github.com/aio-libs/aiohttp) y [FastApi](https://github.com/tiangolo/fastapi).
 
 Características principales:
 
@@ -11,7 +11,7 @@ Características principales:
 
 ## Requisitos
 
-- Python 3.6+
+- Python 3.7+
 
 ## Instalación
 

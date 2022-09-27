@@ -458,6 +458,7 @@
 <li><code>on_shutdown</code>: Donde cerrarás las conexiones por ejemplo.</li>
 <li><code>on_cleanup</code>: Donde liberarás la memoria por ejemplo.</li>
 </ul>
+<p>¡Los hooks internos siempre serán ejecutados aunque hayan sido ignorados en la definición del Command!</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">aiocli.commander</span> <span class="kn">import</span> <span class="n">Application</span><span class="p">,</span> <span class="n">run_app</span>
 <span class="kn">from</span> <span class="nn">aiocli.commander_app</span> <span class="kn">import</span> <span class="n">CommandArgument</span><span class="p">,</span> <span class="n">State</span>
 

@@ -22,7 +22,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: deps
         timeout-minutes: 5
-        run: python3 run-script dev-install
+        run: python3 -m pip install .[dev,fmt,security-analysis,static-analysis,test]
       - name: security-analysis
         timeout-minutes: 1
         run: python3 run-script security-analysis

@@ -139,7 +139,7 @@ ApplicationReturn = Union[int, None, Callable[..., Optional[int]]]
 
 
 def run_app(
-    app: Application,
+    app: Union[Application, Callable[[], Application]],
     *,
     loop: Optional[AbstractEventLoop] = None,
     handle_signals: bool = True,
@@ -150,10 +150,11 @@ def run_app(
 ) -> ApplicationReturn:
     def wrapper(*args, **kwargs) -> Optional[int]:  # type: ignore
         loop_ = loop or get_event_loop()
+        app_ = app if isinstance(app, Application) else app()
         try:
             loop_.run_until_complete(
                 _run_app(
-                    app,
+                    app_,
                     loop=loop_,
                     handle_signals=handle_signals,
                     argv=argv if parser is None else parser(*args, **kwargs),
@@ -169,6 +170,6 @@ def run_app(
                 loop_.run_until_complete(loop_.shutdown_asyncgens())
             if close_loop and not loop_.is_closed():
                 loop_.close()
-        return app.exit_code
+        return app_.exit_code
 
     return wrapper() if parser is None else wrapper

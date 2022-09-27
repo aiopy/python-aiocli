@@ -6,11 +6,11 @@
 
 - Full compatible with Python's [argparse module](https://docs.python.org/3/library/argparse.html). *Nothing new to learn.*
 
-- Completely typed based on standard Python 3.6 [type hints](https://docs.python.org/3/library/typing.html). *Fewer bugs, IDEs friendly.*
+- Completely typed based on standard Python 3.7 [type hints](https://docs.python.org/3/library/typing.html). *Fewer bugs, IDEs friendly.*
 
 ### Async support
 
-- Works and awaited through `run_app(...)` method like [AIOHTTP](https://github.com/aio-libs/aiohttp) library. *Easy to use.* 
+- Works and awaited through `run_app(...)` method like [AIOHTTP](https://github.com/aio-libs/aiohttp) library. *Easy to use.*
 
 - Allow set an [event loop](https://docs.python.org/3/library/asyncio-eventloop.html), by default `get_event_loop()`. *Better third party integrations.*
 

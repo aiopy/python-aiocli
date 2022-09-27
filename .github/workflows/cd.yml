@@ -22,7 +22,7 @@ jobs:
       - name: version
         run: sed -i "s/__version__ = '.*'/__version__ = '$VERSION'/g" aiocli/__init__.py
       - name: deps
-        run: python3 run-script dev-install
+        run: python3 -m pip install .[dev,deploy]
       - name: deploy
         env:
           TWINE_USERNAME: ${{ secrets.POETRY_HTTP_BASIC_PYPI_USERNAME }}
