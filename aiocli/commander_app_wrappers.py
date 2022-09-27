@@ -1,5 +1,5 @@
 from asyncio import AbstractEventLoop
-from typing import List, Optional
+from typing import Callable, List, Optional, Union
 
 from aiocli.commander import Application, ApplicationParser, ApplicationReturn, run_app
 
@@ -18,7 +18,7 @@ __all__ = (
 
 
 def _cloud_run_app(
-    app: Application,
+    app: Union[Application, Callable[[], Application]],
     *,
     loop: Optional[AbstractEventLoop] = None,
     handle_signals: bool = True,

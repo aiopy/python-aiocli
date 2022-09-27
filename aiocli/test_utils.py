@@ -1,7 +1,7 @@
 import sys
 from asyncio import AbstractEventLoop, TimeoutError, get_event_loop, wait_for
 from types import TracebackType
-from typing import Any, List, Optional, Type
+from typing import Any, Callable, List, Optional, Type, Union
 
 from aiocli.commander import AppRunner
 from aiocli.commander_app import Application
@@ -13,8 +13,13 @@ class TestCommander:
     _loop: AbstractEventLoop
     _runner: Optional[AppRunner]
 
-    def __init__(self, app: Application, *, loop: Optional[AbstractEventLoop] = None) -> None:
-        self._app = app
+    def __init__(
+        self,
+        app: Union[Application, Callable[[], Application]],
+        *,
+        loop: Optional[AbstractEventLoop] = None,
+    ) -> None:
+        self._app = app if isinstance(app, Application) else app()
         self._loop = loop or get_event_loop()
         self._runner = None
 

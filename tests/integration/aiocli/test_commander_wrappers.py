@@ -6,9 +6,11 @@ import pytest
 from aiocli.commander_app_wrappers import (
     Application,
     ApplicationParser,
+    alibaba_run_app,
     aws_run_app,
     az_run_app,
     gcp_run_app,
+    oracle_run_app,
 )
 
 
@@ -19,14 +21,19 @@ from aiocli.commander_app_wrappers import (
         aws_run_app,
         az_run_app,
         gcp_run_app,
+        alibaba_run_app,
+        oracle_run_app,
     ],
 )
 def test_cloud_run_app(cloud_run_app: Callable[..., Callable[..., int]]) -> None:
-    app = Application(default_exit_code=-1)
+    def app() -> Application:
+        sut = Application(default_exit_code=-1)
 
-    @app.command(name='greet:to', positionals=[('--name', {'default': 'World!'})])
-    def handle(name: str) -> int:
-        return 0 if name == 'test' else 1
+        @sut.command(name='greet:to', positionals=[('--name', {'default': 'World!'})])
+        def handle(name: str) -> int:
+            return 0 if name == 'test' else 1
+
+        return sut
 
     def assert_exit_code_is_0(parser: ApplicationParser) -> None:
         assert (

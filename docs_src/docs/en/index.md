@@ -1,6 +1,6 @@
 # AIOCLI
 
-A modern, lightweight, async console runner for building CLIs with Python 3.6+ based on standard Python's [argparse module](https://docs.python.org/3/library/argparse.html) and [type hints](https://docs.python.org/3/library/typing.html) highly inspired by [AIOHTTP](https://github.com/aio-libs/aiohttp) and [FastApi](https://github.com/tiangolo/fastapi).
+A modern, lightweight, async console runner for building CLIs with Python 3.7+ based on standard Python's [argparse module](https://docs.python.org/3/library/argparse.html) and [type hints](https://docs.python.org/3/library/typing.html) highly inspired by [AIOHTTP](https://github.com/aio-libs/aiohttp) and [FastApi](https://github.com/tiangolo/fastapi).
 
 Key Features:
 
@@ -11,7 +11,7 @@ Key Features:
 
 ## Requirements
 
-- Python 3.6+
+- Python 3.7+
 
 ## Installation
 

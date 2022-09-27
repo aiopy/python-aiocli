@@ -35,7 +35,7 @@
 * Add startup, shutdown and cleanup handler signals.
 * Fix event loop issues when cancelling tasks.
 * Improve exit code feature support.
-* Fix Python 3.6 support with all_tasks function helper.
+* Fix Python 3.7 support with all_tasks function helper.
 * Add example.
 * Add GitHub actions pipeline.
 * Improve tests.
