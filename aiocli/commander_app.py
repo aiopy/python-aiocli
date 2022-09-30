@@ -147,6 +147,60 @@ class InternalCommandHook(ABC):
         pass
 
 
+_yellow_color = '\033[93m'
+_green_color = '\033[92m'
+_close_color = '\033[00m'
+
+
+@dataclass
+class _ApplicationDescription:
+    default_router: List[Command]
+    routers: Dict[str, List[Command]]
+
+    def _get_commands(self) -> List[Command]:
+        commands = [*self.default_router]
+        for commands_ in self.routers.values():
+            commands += commands_
+        return [command for command in commands if command.name not in ['-h', '--help', '-v', '--version']]
+
+    def _get_spaces(self) -> int:
+        number_letters_largest_command = 0
+        for command_ in self._get_commands():
+            if len(command_.name) > number_letters_largest_command:
+                number_letters_largest_command = len(command_.name)
+        return number_letters_largest_command + 2
+
+    @staticmethod
+    def _parse_router(commands: List[Command], spaces: int) -> str:
+        return '\n'.join(
+            [
+                '  {0}{1}{2}{3}{4}'.format(
+                    _green_color,
+                    command.name,
+                    _close_color,
+                    ' ' * (spaces - len(command.name)),
+                    command.description or '',
+                )
+                for command in commands
+                if command.name not in ['-h', '--help', '-v', '--version']
+            ]
+        )
+
+    def parse(self) -> str:
+        spaces = self._get_spaces()
+        return '{0}commands:{1}\n{2}\n{3}'.format(
+            _yellow_color,
+            _close_color,
+            self._parse_router(self.default_router, spaces),
+            '\n'.join(
+                [
+                    '{0}{1}{2}\n{3}'.format(_yellow_color, router, _close_color, self._parse_router(commands, spaces))
+                    for router, commands in self.routers.items()
+                ]
+            ),
+        )
+
+
 class Application:
     _parser: ArgumentParser
     _parsers: Dict[str, ArgumentParser]
@@ -164,6 +218,7 @@ class Application:
     _app_state_resolver: Optional[ArgumentParser]
     _default_command: str
     _use_print_for_logging: bool
+    _description: _ApplicationDescription
 
     def __init__(
         self,
@@ -192,6 +247,7 @@ class Application:
             description=description,
             prog=title,
             formatter_class=RawTextHelpFormatter,
+            usage='{0} [-h] [--version]{1}'.format(title, '\n\n  {0}'.format(description) if description else ''),
         )
         self._parser.add_argument('--version', action='version', version=version)
         self._parsers = {
@@ -225,6 +281,7 @@ class Application:
         self._on_cleanup = [] if on_cleanup is None else list(on_cleanup)
         self._deprecated = bool(deprecated)
         self._dependencies_cached = {}
+        self._description = _ApplicationDescription(default_router=[*self._commands.values()], routers={})
         self.include_routers([] if routers is None else routers)
 
     async def __call__(self, args: List[str]) -> int:
@@ -242,6 +299,8 @@ class Application:
 
     async def _execute_command(self, name: str, args: List[str]) -> Optional[int]:
         if name not in self._parsers:
+            if name:
+                self._log(msg='{0}Command got "{1}".'.format('[deprecated] ' if self._deprecated else '', name))
             raise SystemExit('Missing command')
         self._log(msg='{0}Command got "{1}".'.format('[deprecated] ' if self._deprecated else '', name))
         self._log(
@@ -264,7 +323,7 @@ class Application:
                     cmd.deprecated = self._deprecated
                 self._commands[name] = cmd
                 self._parsers[name] = router._parsers[name]
-                self._update_parser_description(name)
+                self._update_parser_description(router._parser.prog, cmd)
         for middleware in router._middleware:
             self._middleware.append(middleware)
         self._exception_handlers.update(router._exception_handlers)
@@ -433,14 +492,23 @@ class Application:
             prog=cmd.name,
             usage=cmd.usage,
         )
-        args = cmd.positionals + cmd.optionals
-        for arg in args:
+        for arg in cmd.optionals:
             if isinstance(arg, CommandArgument):
                 arg = (arg.name_or_flags, arg._asdict())  # type: ignore
                 del arg[1]['name_or_flags']  # type: ignore
             parser.add_argument(arg[0], **arg[1])  # type: ignore
+        for arg in cmd.positionals:
+            if isinstance(arg, CommandArgument):
+                arg = (arg.name_or_flags, arg._asdict())  # type: ignore
+                del arg[1]['name_or_flags']  # type: ignore
+            if isinstance(arg[1], dict):
+                if 'dest' in arg[1]:
+                    del arg[1]['dest']
+                if 'required' in arg[1]:
+                    del arg[1]['required']
+            parser.add_argument(arg[0], **arg[1])  # type: ignore
         self._parsers[cmd.name] = parser
-        self._update_parser_description(cmd.name)
+        self._update_parser_description(self._parser.prog, cmd)
 
     async def _execute_command_middleware(
         self,
@@ -476,8 +544,13 @@ class Application:
                 *([hook] if len(signature(hook).parameters) == 0 else [hook, self])  # type: ignore
             )
 
-    def _update_parser_description(self, name: str) -> None:
-        self._parser.description = '{0}{1}\n'.format(self._parser.description, name)
+    def _update_parser_description(self, router: Optional[str], cmd: Command) -> None:
+        if router and router != 'aiocli.commander':
+            self._description.routers.setdefault(router, [])
+            self._description.routers[router].append(cmd)
+        else:
+            self._description.default_router.append(cmd)
+        self._parser.description = self._description.parse()
 
     async def _resolve_command_handler_args(self, name: str, args: List[str]) -> Dict[str, Any]:
         if args:
