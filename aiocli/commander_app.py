@@ -188,17 +188,22 @@ class _ApplicationDescription:
 
     def parse(self) -> str:
         spaces = self._get_spaces()
-        return '{0}commands:{1}\n{2}\n{3}'.format(
+        return '{0}Available commands:{1}\n{2}\n{3}'.format(
             _yellow_color,
             _close_color,
             self._parse_router(self.default_router, spaces),
             '\n'.join(
                 [
-                    '{0}{1}{2}\n{3}'.format(_yellow_color, router, _close_color, self._parse_router(commands, spaces))
+                    '{0} {1}{2}\n{3}'.format(_yellow_color, router, _close_color, self._parse_router(commands, spaces))
                     for router, commands in self.routers.items()
                 ]
             ),
         )
+
+
+class ApplicationHelpFormatter(RawTextHelpFormatter):
+    def _format_usage(self, usage: Any, actions: Any, groups: Any, prefix: Any) -> str:
+        return super()._format_usage(usage, actions, groups, '{0}Usage: {1}'.format(_yellow_color, _close_color))
 
 
 class Application:
@@ -246,9 +251,10 @@ class Application:
         self._parser = ArgumentParser(
             description=description,
             prog=title,
-            formatter_class=RawTextHelpFormatter,
+            formatter_class=ApplicationHelpFormatter,
             usage='{0} [-h] [--version]{1}'.format(title, '\n\n  {0}'.format(description) if description else ''),
         )
+        self._update_parser_help(self._parser, cast(str, self.parser.usage))
         self._parser.add_argument('--version', action='version', version=version)
         self._parsers = {
             '-h': self._parser,
@@ -323,7 +329,7 @@ class Application:
                     cmd.deprecated = self._deprecated
                 self._commands[name] = cmd
                 self._parsers[name] = router._parsers[name]
-                self._update_parser_description(router._parser.prog, cmd)
+                self._update_main_parser_description(router._parser, cmd)
         for middleware in router._middleware:
             self._middleware.append(middleware)
         self._exception_handlers.update(router._exception_handlers)
@@ -507,8 +513,9 @@ class Application:
                 if 'required' in arg[1]:
                     del arg[1]['required']
             parser.add_argument(arg[0], **arg[1])  # type: ignore
+        self._update_parser_help(parser, cmd.name)
         self._parsers[cmd.name] = parser
-        self._update_parser_description(self._parser.prog, cmd)
+        self._update_main_parser_description(self._parser, cmd)
 
     async def _execute_command_middleware(
         self,
@@ -544,14 +551,6 @@ class Application:
                 *([hook] if len(signature(hook).parameters) == 0 else [hook, self])  # type: ignore
             )
 
-    def _update_parser_description(self, router: Optional[str], cmd: Command) -> None:
-        if router and router != 'aiocli.commander':
-            self._description.routers.setdefault(router, [])
-            self._description.routers[router].append(cmd)
-        else:
-            self._description.default_router.append(cmd)
-        self._parser.description = self._description.parse()
-
     async def _resolve_command_handler_args(self, name: str, args: List[str]) -> Dict[str, Any]:
         if args:
             self._log(msg='Resolving args: {0}'.format(', '.join(args)))
@@ -559,7 +558,8 @@ class Application:
 
     async def _resolve_command_handler_kwargs(self, func: CommandHandler, kwargs: Dict[str, Any]) -> Dict[str, Any]:
         func_params = [param for param in signature(func).parameters.values() if param.name not in kwargs]
-        self._log(msg='Resolving kwargs: {0}'.format(', '.join([func_param.name for func_param in func_params])))
+        if func_params:
+            self._log(msg='Resolving kwargs: {0}'.format(', '.join([func_param.name for func_param in func_params])))
         kwargs_ = {**kwargs}
         for param in func_params:
             kwargs_.update(
@@ -621,9 +621,11 @@ class Application:
 
     async def _execute_command_handler(self, handler: CommandHandler, kwargs: Dict[str, Any]) -> int:
         self._log(
-            msg='Executing command handler with: {0}'.format(
+            msg='Executing command handler with: {0}.'.format(
                 ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()])
-            ),
+            )
+            if kwargs
+            else 'Executing command handler.',
         )
         return cast(int, await resolve_function(handler, **kwargs))
 
@@ -656,3 +658,18 @@ class Application:
                 print(msg)
             else:
                 logger.debug(msg)
+
+    def _update_main_parser_description(self, parser: ArgumentParser, cmd: Command) -> None:
+        router: Optional[str] = parser.prog
+        if router and router != 'aiocli.commander':
+            self._description.routers.setdefault(router, [])
+            self._description.routers[router].append(cmd)
+        else:
+            self._description.default_router.append(cmd)
+        self._parser.description = self._description.parse()
+
+    @staticmethod
+    def _update_parser_help(parser: ArgumentParser, prog: str) -> None:
+        parser.usage = prog
+        parser._positionals.title = '{0}Arguments{1}'.format(_yellow_color, _close_color)
+        parser._optionals.title = '{0}Options{1}'.format(_yellow_color, _close_color)

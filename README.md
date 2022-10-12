@@ -2,7 +2,7 @@
 
 [![PyPI version](https://badge.fury.io/py/aiocli.svg)](https://badge.fury.io/py/aiocli)
 [![PyPIDownloads](https://static.pepy.tech/badge/aiocli)](https://pepy.tech/project/aiocli)
-[![CI](https://github.com/aiopy/python-aiocli/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/aiopy/python-aiocli/actions/workflows/ci.yml)
+[![CI](https://github.com/aiopy/python-aiocli/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aiopy/python-aiocli/actions/workflows/ci.yml)
 
 aiocli is a Python library for simple and lightweight async console runner.
 
@@ -42,7 +42,7 @@ def _get_logger(state: State) -> Logger:
     logger.addHandler(handler)
     return logger
 
-@app.command(name='greet:to', positionals=[('--name', {'default': 'World!'})])
+@app.command(name='greet:to', positionals=[('name', {'default': 'World!'})])
 async def handle_greeting(name: str, logger: Logger = Depends(_get_logger)) -> int:
     logger.info(f'Hello {name}')
     return 0

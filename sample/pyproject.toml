@@ -1,0 +1,15 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools"]
+
+[project]
+dependencies = ["aiocli"]
+[project.optional-dependencies]
+deploy = ["build==0.8.0", "setuptools==65.3.0"]
+description = "aiocli sample package."
+version = "0.0.0"
+keywords = ["aiopy", "aiocli", "sample"]
+license = { text = "MIT" }
+name = "sample"
+readme = "README.md"
+requires-python = ">=3.7"
