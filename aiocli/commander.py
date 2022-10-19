@@ -78,7 +78,7 @@ class AppRunner:
     def app(self) -> Application:
         return self._app
 
-    async def setup(self, all_hooks: bool = True) -> None:
+    async def setup(self, all_hooks: bool = True, ignore_internal_hooks: bool = False) -> None:
         if self._handle_signals:
             try:
                 self._loop.add_signal_handler(signal.SIGINT, _raise_graceful_exit)
@@ -86,16 +86,16 @@ class AppRunner:
             except NotImplementedError:  # pragma: no cover
                 # add_signal_handler is not implemented on Windows
                 pass
-        await self.startup(all_hooks=all_hooks)
+        await self.startup(all_hooks=all_hooks, ignore_internal_hooks=ignore_internal_hooks)
 
-    async def startup(self, all_hooks: bool) -> None:
-        await self._app.startup(all_hooks=all_hooks)
+    async def startup(self, all_hooks: bool, ignore_internal_hooks: bool = False) -> None:
+        await self._app.startup(all_hooks=all_hooks, ignore_internal_hooks=ignore_internal_hooks)
 
-    async def shutdown(self) -> None:
-        await self._app.shutdown()
+    async def shutdown(self, all_hooks: bool, ignore_internal_hooks: bool = False) -> None:
+        await self._app.shutdown(all_hooks=all_hooks, ignore_internal_hooks=ignore_internal_hooks)
 
-    async def cleanup(self) -> None:
-        await self.shutdown()
+    async def cleanup(self, all_hooks: bool = False, ignore_internal_hooks: bool = False) -> None:
+        await self.shutdown(all_hooks=all_hooks, ignore_internal_hooks=ignore_internal_hooks)
         if self._handle_signals:
             try:
                 self._loop.remove_signal_handler(signal.SIGINT)
@@ -103,7 +103,7 @@ class AppRunner:
             except NotImplementedError:  # pragma: no cover
                 # remove_signal_handler is not implemented on Windows
                 pass
-        await self._app.cleanup()
+        await self._app.cleanup(all_hooks=all_hooks, ignore_internal_hooks=ignore_internal_hooks)
         if self._exit_code:
             self._app.exit()
 
@@ -118,19 +118,13 @@ async def _run_app(
 ) -> None:
     runner = AppRunner(app, loop=loop, handle_signals=handle_signals, exit_code=exit_code)
     args = argv or sys.argv[1:]
-    if app.should_ignore_hooks(args):
-        await runner.setup(all_hooks=False)
-        try:
-            await app(args)
-        finally:
-            if exit_code:
-                app.exit()
-    else:
-        await runner.setup(all_hooks=True)
-        try:
-            await app(args)
-        finally:
-            await runner.cleanup()
+    all_hooks = not app.should_ignore_hooks(args)
+    ignore_internal_hooks = app.should_ignore_internal_hooks(args)
+    await runner.setup(all_hooks=all_hooks, ignore_internal_hooks=ignore_internal_hooks)
+    try:
+        await app(args)
+    finally:
+        await runner.cleanup(all_hooks=all_hooks, ignore_internal_hooks=ignore_internal_hooks)
 
 
 ApplicationParser = Callable[..., Optional[List[str]]]
