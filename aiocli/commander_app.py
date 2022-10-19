@@ -28,6 +28,7 @@ __all__ = (
     'command',
     'CommandHandler',
     'Application',
+    'InternalCommandHook',
 )
 
 from .helpers import iscoroutinefunction, resolve_coroutine, resolve_function
@@ -86,6 +87,13 @@ class Command:
     description: Optional[str] = None
     usage: Optional[str] = None
     ignore_hooks: bool = False
+    ignore_middleware: bool = False
+
+    def should_ignore_internal_hooks(self) -> bool:
+        return self.ignore_hooks and self.name in ['-h', '--help', '-v', '--version']
+
+    def should_ignore_middleware(self) -> bool:
+        return self.ignore_middleware and self.name in ['-h', '--help', '-v', '--version']
 
 
 def command(
@@ -269,7 +277,7 @@ class Application:
                 _ = self._parser.parse_args([name])
                 return default_exit_code
 
-            return Command(name=name, handler=self_handler, deprecated=False, ignore_hooks=True)
+            return Command(name=name, handler=self_handler, deprecated=False, ignore_hooks=True, ignore_middleware=True)
 
         self._commands = {
             '-h': self_command('-h'),
@@ -303,7 +311,7 @@ class Application:
             self._exit_code = self._exit_code if exit_code is None else exit_code
         return self._exit_code
 
-    async def _execute_command(self, name: str, args: List[str]) -> Optional[int]:
+    def _ensure_command_exists(self, name: str) -> None:
         if name not in self._parsers:
             if name:
                 self._log(msg='{0}Command got "{1}".'.format('[deprecated] ' if self._deprecated else '', name))
@@ -314,6 +322,9 @@ class Application:
                 '[deprecated] ' if self._deprecated else '', self._commands[name].handler.__name__
             )
         )
+
+    async def _execute_command(self, name: str, args: List[str]) -> Optional[int]:
+        self._ensure_command_exists(name=name)
         kwargs = await self._resolve_command_handler_args(name, args)
         kwargs = await self._resolve_command_handler_kwargs(self._commands[name].handler, kwargs)
         try:
@@ -386,13 +397,21 @@ class Application:
 
         return decorator
 
-    def should_ignore_hooks(self, args: List[str]) -> bool:
+    def _get_command_from_args(self, args: List[str]) -> Optional[Command]:
         cmd: Optional[Command] = None
         if len(args) > 0:
             cmd = self.get_command(name=args[0])
         if not cmd:
             cmd = self.get_command(name=self._default_command)
+        return cmd
+
+    def should_ignore_hooks(self, args: List[str]) -> bool:
+        cmd = self._get_command_from_args(args=args)
         return not cmd or cmd.ignore_hooks
+
+    def should_ignore_internal_hooks(self, args: List[str]) -> bool:
+        cmd = self._get_command_from_args(args=args)
+        return not cmd or cmd.should_ignore_internal_hooks() or args[-1] in ['-h', '--help', '-v', '--version']
 
     def add_commands(self, commands: Sequence[Command]) -> None:
         for cmd in commands:
@@ -469,22 +488,22 @@ class Application:
     def on_startup(self) -> List[CommandHook]:
         return self._on_startup
 
-    async def startup(self, all_hooks: bool = True) -> None:
-        await self._execute_command_hooks(self.on_startup, all_hooks)
+    async def startup(self, all_hooks: bool = True, ignore_internal_hooks: bool = False) -> None:
+        await self._execute_command_hooks(self.on_startup, all_hooks, ignore_internal_hooks)
 
     @property
     def on_shutdown(self) -> List[CommandHook]:
         return self._on_shutdown
 
-    async def shutdown(self) -> None:
-        await self._execute_command_hooks(self._on_shutdown)
+    async def shutdown(self, all_hooks: bool = True, ignore_internal_hooks: bool = False) -> None:
+        await self._execute_command_hooks(self._on_shutdown, all_hooks, ignore_internal_hooks)
 
     @property
     def on_cleanup(self) -> List[CommandHook]:
         return self._on_cleanup
 
-    async def cleanup(self) -> None:
-        await self._execute_command_hooks(self._on_cleanup)
+    async def cleanup(self, all_hooks: bool = True, ignore_internal_hooks: bool = False) -> None:
+        await self._execute_command_hooks(self._on_cleanup, all_hooks, ignore_internal_hooks)
 
     def _add_command(self, cmd: Command) -> None:
         if cmd.deprecated is None:
@@ -523,6 +542,9 @@ class Application:
         cmd: Command,
         kwargs: Dict[str, Any],
     ) -> None:
+        if cmd.should_ignore_middleware():
+            self._log(msg='Command middleware ignored')
+            return
         for handler in command_middleware:
             self._log(
                 msg='Executing middleware {0} with {1}({2})...'.format(
@@ -535,13 +557,22 @@ class Application:
                 *([handler] if len(signature(handler).parameters) == 0 else [handler, cmd, kwargs])  # type: ignore
             )
 
-    async def _execute_command_hooks(self, command_hooks: List[CommandHook], all_hooks: bool = True) -> None:
+    async def _execute_command_hooks(
+        self,
+        command_hooks: List[CommandHook],
+        all_hooks: bool = True,
+        ignore_internal_hooks: bool = False,
+    ) -> None:
         command_hooks_ = (
-            command_hooks if all_hooks else [hook for hook in command_hooks if isinstance(hook, InternalCommandHook)]
+            command_hooks
+            if all_hooks
+            else [
+                hook.__call__
+                for hook in command_hooks
+                if isinstance(hook, InternalCommandHook) and not ignore_internal_hooks
+            ]
         )
         for hook in command_hooks_:
-            if isinstance(hook, InternalCommandHook):
-                hook = hook.__call__
             self._log(
                 msg='Executing hook "{0}" ({1})'.format(
                     hook.__name__ if hasattr(hook, '__name__') else 'unknown', id(hook)
