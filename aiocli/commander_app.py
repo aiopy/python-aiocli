@@ -566,13 +566,11 @@ class Application:
         command_hooks_ = (
             command_hooks
             if all_hooks
-            else [
-                hook.__call__
-                for hook in command_hooks
-                if isinstance(hook, InternalCommandHook) and not ignore_internal_hooks
-            ]
+            else [hook for hook in command_hooks if isinstance(hook, InternalCommandHook) and not ignore_internal_hooks]
         )
         for hook in command_hooks_:
+            if isinstance(hook, InternalCommandHook):
+                hook = hook.__call__
             self._log(
                 msg='Executing hook "{0}" ({1})'.format(
                     hook.__name__ if hasattr(hook, '__name__') else 'unknown', id(hook)

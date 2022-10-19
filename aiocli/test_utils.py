@@ -12,16 +12,22 @@ class TestCommander:
     _app: Application
     _loop: AbstractEventLoop
     _runner: Optional[AppRunner]
+    _all_hooks: bool
+    _ignore_internal_hooks: bool
 
     def __init__(
         self,
         app: Union[Application, Callable[[], Application]],
         *,
         loop: Optional[AbstractEventLoop] = None,
+        all_hooks: bool = True,
+        ignore_internal_hooks: bool = False,
     ) -> None:
         self._app = app if isinstance(app, Application) else app()
         self._loop = loop or get_event_loop()
         self._runner = None
+        self._all_hooks = all_hooks
+        self._ignore_internal_hooks = ignore_internal_hooks
 
     async def handle(
         self,
@@ -41,15 +47,15 @@ class TestCommander:
         if self._runner:
             return
         self._runner = await self._make_runner(**kwargs)
-        await self._runner.setup(all_hooks=True)
+        await self._runner.setup(all_hooks=self._all_hooks, ignore_internal_hooks=self._ignore_internal_hooks)
 
     async def __aenter__(self) -> 'TestCommander':
-        await self.start_commander()
+        await self.start_commander(all_hooks=self._all_hooks, ignore_internal_hooks=self._ignore_internal_hooks)
         return self
 
     async def close(self) -> None:
         if self._runner:
-            await self._runner.cleanup()
+            await self._runner.cleanup(all_hooks=self._all_hooks, ignore_internal_hooks=self._ignore_internal_hooks)
 
     async def __aexit__(
         self,
