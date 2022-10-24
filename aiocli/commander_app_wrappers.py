@@ -25,7 +25,8 @@ def _cloud_run_app(
     argv: Optional[List[str]] = None,
     exit_code: bool = False,
     close_loop: bool = False,
-    parser: Optional[ApplicationParser] = None
+    parser: Optional[ApplicationParser] = None,
+    override_color: Optional[bool] = False,
 ) -> ApplicationReturn:
     return run_app(
         app=app,
@@ -35,6 +36,7 @@ def _cloud_run_app(
         exit_code=exit_code,
         close_loop=close_loop,
         parser=(lambda *args, **kwargs: argv) if parser is None else parser,
+        override_color=override_color,
     )
 
 

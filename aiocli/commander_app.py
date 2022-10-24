@@ -61,10 +61,26 @@ class CommandArgument(NamedTuple):
     default: Any = None
     type: Union[Type[Any], Callable[[str], Any]] = str
     choices: Optional[Container[Any]] = None
-    required: Optional[bool] = None
+    required: Optional[bool] = None  # only for optionals
     help: Optional[str] = None
     metavar: Optional[str] = None
-    dest: Optional[str] = None
+    dest: Optional[str] = None  # only for optionals
+
+    def dict(self, optional: bool) -> Tuple[Union[str, List[str]], Dict[str, Any]]:
+        kwargs = {
+            'action': self.action,
+            'nargs': self.nargs,
+            'const': self.const,
+            'default': self.default,
+            'type': self.type,
+            'choices': self.choices,
+            'help': self.help,
+            'metavar': self.metavar,
+        }
+        if optional:
+            kwargs['dest'] = self.dest
+            kwargs['required'] = self.required
+        return self.name_or_flags, kwargs
 
 
 @dataclass
@@ -164,6 +180,7 @@ _close_color = '\033[00m'
 class _ApplicationDescription:
     default_router: List[Command]
     routers: Dict[str, List[Command]]
+    color: bool
 
     def _get_commands(self) -> List[Command]:
         commands = [*self.default_router]
@@ -178,14 +195,13 @@ class _ApplicationDescription:
                 number_letters_largest_command = len(command_.name)
         return number_letters_largest_command + 2
 
-    @staticmethod
-    def _parse_router(commands: List[Command], spaces: int) -> str:
+    def _parse_router(self, commands: List[Command], spaces: int) -> str:
         return '\n'.join(
             [
                 '  {0}{1}{2}{3}{4}'.format(
-                    _green_color,
+                    _green_color if self.color else '',
                     command.name,
-                    _close_color,
+                    _close_color if self.color else '',
                     ' ' * (spaces - len(command.name)),
                     command.description or '',
                 )
@@ -197,12 +213,17 @@ class _ApplicationDescription:
     def parse(self) -> str:
         spaces = self._get_spaces()
         return '{0}Available commands:{1}\n{2}\n{3}'.format(
-            _yellow_color,
-            _close_color,
+            _yellow_color if self.color else '',
+            _close_color if self.color else '',
             self._parse_router(self.default_router, spaces),
             '\n'.join(
                 [
-                    '{0} {1}{2}\n{3}'.format(_yellow_color, router, _close_color, self._parse_router(commands, spaces))
+                    '{0} {1}{2}\n{3}'.format(
+                        _yellow_color if self.color else '',
+                        router,
+                        _close_color if self.color else '',
+                        self._parse_router(commands, spaces),
+                    )
                     for router, commands in self.routers.items()
                 ]
             ),
@@ -210,8 +231,15 @@ class _ApplicationDescription:
 
 
 class ApplicationHelpFormatter(RawTextHelpFormatter):
+    color: bool
+
     def _format_usage(self, usage: Any, actions: Any, groups: Any, prefix: Any) -> str:
-        return super()._format_usage(usage, actions, groups, '{0}Usage: {1}'.format(_yellow_color, _close_color))
+        return super()._format_usage(
+            usage,
+            actions,
+            groups,
+            '{0}Usage: {1}'.format(_yellow_color if self.color else '', _close_color if self.color else ''),
+        )
 
 
 class Application:
@@ -220,7 +248,8 @@ class Application:
     _debug: bool
     _commands: Dict[str, Command]
     _exit_code: int
-    _middleware: List[CommandMiddleware]
+    _before_middleware: List[CommandMiddleware]
+    _after_middleware: List[CommandMiddleware]
     _exception_handlers: Dict[Type[BaseException], CommandExceptionHandler]
     _on_startup: List[CommandHook]
     _on_shutdown: List[CommandHook]
@@ -232,6 +261,7 @@ class Application:
     _default_command: str
     _use_print_for_logging: bool
     _description: _ApplicationDescription
+    _color: bool
 
     def __init__(
         self,
@@ -243,6 +273,7 @@ class Application:
         version: str = 'unknown',
         default_exit_code: int = 0,
         middleware: Optional[Sequence[CommandMiddleware]] = None,
+        after_middleware: Optional[Sequence[CommandMiddleware]] = None,
         exception_handlers: Optional[Dict[Type[BaseException], CommandExceptionHandler]] = None,
         on_startup: Optional[Sequence[CommandHook]] = None,
         on_shutdown: Optional[Sequence[CommandHook]] = None,
@@ -252,14 +283,20 @@ class Application:
         default_command: Optional[str] = None,
         routers: Optional[Sequence['Application']] = None,
         use_print_for_logging: bool = False,
+        color: bool = True,
     ) -> None:
+        self._color = color
         self._use_print_for_logging = use_print_for_logging
         self._app_state = None  # lazy
         self._app_state_resolver = state or (lambda: State())  # type: ignore
+
+        class InternalApplicationHelpFormatter(ApplicationHelpFormatter):
+            color = self._color
+
         self._parser = ArgumentParser(
             description=description,
             prog=title,
-            formatter_class=ApplicationHelpFormatter,
+            formatter_class=InternalApplicationHelpFormatter,
             usage='{0} [-h] [--version]{1}'.format(title, '\n\n  {0}'.format(description) if description else ''),
         )
         self._update_parser_help(self._parser, cast(str, self.parser.usage))
@@ -288,14 +325,15 @@ class Application:
         self.add_commands([] if commands is None else commands)
         self._default_command = default_command or '-h'
         self._exit_code = default_exit_code
-        self._middleware = [] if middleware is None else list(middleware)
+        self._before_middleware = [] if middleware is None else list(middleware)
+        self._after_middleware = [] if after_middleware is None else list(after_middleware)
         self._exception_handlers = {} if exception_handlers is None else exception_handlers
         self._on_startup = [] if on_startup is None else list(on_startup)
         self._on_shutdown = [] if on_shutdown is None else list(on_shutdown)
         self._on_cleanup = [] if on_cleanup is None else list(on_cleanup)
         self._deprecated = bool(deprecated)
         self._dependencies_cached = {}
-        self._description = _ApplicationDescription(default_router=[*self._commands.values()], routers={})
+        self._description = _ApplicationDescription(default_router=[*self._commands.values()], routers={}, color=color)
         self.include_routers([] if routers is None else routers)
 
     async def __call__(self, args: List[str]) -> int:
@@ -328,8 +366,10 @@ class Application:
         kwargs = await self._resolve_command_handler_args(name, args)
         kwargs = await self._resolve_command_handler_kwargs(self._commands[name].handler, kwargs)
         try:
-            await self._execute_command_middleware(self._middleware, self._commands[name], kwargs)
-            return await self._execute_command_handler(self._commands[name].handler, kwargs)
+            await self._execute_command_middleware(self._before_middleware, self._commands[name], kwargs)
+            exit_code = await self._execute_command_handler(self._commands[name].handler, kwargs)
+            await self._execute_command_middleware(self._after_middleware, self._commands[name], kwargs)
+            return exit_code
         except BaseException as err:
             return await self._execute_command_exception_handler(err, self._commands[name], kwargs)
 
@@ -341,15 +381,13 @@ class Application:
                 self._commands[name] = cmd
                 self._parsers[name] = router._parsers[name]
                 self._update_main_parser_description(router._parser, cmd)
-        for middleware in router._middleware:
-            self._middleware.append(middleware)
+        self._before_middleware.extend(router._before_middleware)
+        self._after_middleware.extend(router._after_middleware)
         self._exception_handlers.update(router._exception_handlers)
-        for on_startup in router._on_startup[1:]:
-            self._on_startup.append(on_startup)
-        for on_shutdown in router._on_shutdown:
-            self._on_shutdown.append(on_shutdown)
-        for on_cleanup in router._on_cleanup:
-            self._on_cleanup.append(on_cleanup)
+        self._on_startup.extend(router._on_startup)
+        self._on_shutdown.extend(router._on_shutdown)
+        self._on_cleanup.extend(router.on_cleanup)
+        self._render_parser()
 
     def include_routers(self, routers: Sequence['Application']) -> None:
         for router in routers:
@@ -423,16 +461,18 @@ class Application:
     def get_parser(self, command_name: str) -> Optional[ArgumentParser]:
         return self._parsers.get(command_name, None)
 
-    def middleware(self) -> Callable[[CommandMiddleware], CommandMiddleware]:
+    def middleware(self, after: bool = False) -> Callable[[CommandMiddleware], CommandMiddleware]:
         def decorator(middleware: CommandMiddleware) -> CommandMiddleware:
-            self.add_middleware([middleware])
+            self.add_middleware(middleware=[middleware], after=after)
             return middleware
 
         return decorator
 
-    def add_middleware(self, middleware: Sequence[CommandMiddleware]) -> None:
-        for middleware_ in middleware:
-            self._middleware.append(middleware_)
+    def add_middleware(self, middleware: Sequence[CommandMiddleware], after: bool = False) -> None:
+        if after:
+            self._after_middleware.extend(middleware)
+        else:
+            self._before_middleware.extend(middleware)
 
     def exception_handler(
         self,
@@ -505,6 +545,10 @@ class Application:
     async def cleanup(self, all_hooks: bool = True, ignore_internal_hooks: bool = False) -> None:
         await self._execute_command_hooks(self._on_cleanup, all_hooks, ignore_internal_hooks)
 
+    def colorize(self, color: bool) -> None:
+        self._color = color
+        self._render_parser()
+
     def _add_command(self, cmd: Command) -> None:
         if cmd.deprecated is None:
             cmd.deprecated = self._deprecated
@@ -519,18 +563,11 @@ class Application:
         )
         for arg in cmd.optionals:
             if isinstance(arg, CommandArgument):
-                arg = (arg.name_or_flags, arg._asdict())  # type: ignore
-                del arg[1]['name_or_flags']  # type: ignore
+                arg = arg.dict(optional=True)  # type: ignore
             parser.add_argument(arg[0], **arg[1])  # type: ignore
         for arg in cmd.positionals:
             if isinstance(arg, CommandArgument):
-                arg = (arg.name_or_flags, arg._asdict())  # type: ignore
-                del arg[1]['name_or_flags']  # type: ignore
-            if isinstance(arg[1], dict):
-                if 'dest' in arg[1]:
-                    del arg[1]['dest']
-                if 'required' in arg[1]:
-                    del arg[1]['required']
+                arg = arg.dict(optional=False)  # type: ignore
             parser.add_argument(arg[0], **arg[1])  # type: ignore
         self._update_parser_help(parser, cmd.name)
         self._parsers[cmd.name] = parser
@@ -697,8 +734,22 @@ class Application:
             self._description.default_router.append(cmd)
         self._parser.description = self._description.parse()
 
-    @staticmethod
-    def _update_parser_help(parser: ArgumentParser, prog: str) -> None:
+    def _update_parser_help(self, parser: ArgumentParser, prog: str) -> None:
         parser.usage = prog
-        parser._positionals.title = '{0}Arguments{1}'.format(_yellow_color, _close_color)
-        parser._optionals.title = '{0}Options{1}'.format(_yellow_color, _close_color)
+        parser._positionals.title = '{0}Arguments{1}'.format(
+            _yellow_color if self._color else '',
+            _close_color if self._color else '',
+        )
+        parser._optionals.title = '{0}Options{1}'.format(
+            _yellow_color if self._color else '',
+            _close_color if self._color else '',
+        )
+
+    def _render_parser(self) -> None:
+        cast(ApplicationHelpFormatter, self._parser.formatter_class).color = self._color
+        self._description.color = self._color
+        self._update_parser_help(self._parser, cast(str, self._parser.usage))
+        self._parser.description = self._description.parse()
+        for _, parser in self._parsers.items():
+            parser.formatter_class = self._parser.formatter_class
+            self._update_parser_help(parser, cast(str, parser.usage))
