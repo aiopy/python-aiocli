@@ -13,10 +13,7 @@ else:
 
 
 from _pytest.main import Session
-from nest_asyncio import apply
 from pytest import fixture
-
-apply()
 
 
 def pytest_sessionfinish(session: Session, exitstatus: int) -> None:

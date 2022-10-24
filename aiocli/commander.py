@@ -141,10 +141,13 @@ def run_app(
     exit_code: bool = True,
     close_loop: bool = True,
     parser: Optional[ApplicationParser] = None,
+    override_color: Optional[bool] = None,
 ) -> ApplicationReturn:
     def wrapper(*args, **kwargs) -> Optional[int]:  # type: ignore
         loop_ = loop or get_event_loop()
         app_ = app if isinstance(app, Application) else app()
+        if override_color is not None:
+            app_.colorize(override_color)
         try:
             loop_.run_until_complete(
                 _run_app(
