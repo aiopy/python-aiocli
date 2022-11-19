@@ -344,7 +344,7 @@ class Application:
                 args=args[1:],
             )
         except SystemExit as err:
-            exit_code = err.code
+            exit_code = err.code  # type: ignore
         finally:
             self._exit_code = self._exit_code if exit_code is None else exit_code
         return self._exit_code
