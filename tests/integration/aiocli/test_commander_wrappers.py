@@ -25,7 +25,7 @@ from aiocli.commander_app_wrappers import (
         oracle_run_app,
     ],
 )
-def test_cloud_run_app(cloud_run_app: Callable[..., Callable[..., int]]) -> None:
+def test_cloud_run_app(cloud_run_app: Callable[..., Callable[..., Any]]) -> None:
     def app() -> Application:
         sut = Application(default_exit_code=-1)
 

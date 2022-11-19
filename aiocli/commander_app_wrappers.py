@@ -1,13 +1,12 @@
 from asyncio import AbstractEventLoop
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, List, Optional, Union
 
-from aiocli.commander import Application, ApplicationParser, ApplicationReturn, run_app
+from aiocli.commander import Application, ApplicationParser, run_app
 
 __all__ = (
     # commander
     'Application',
     'ApplicationParser',
-    'ApplicationReturn',
     # commander_app_wrappers
     'aws_run_app',
     'az_run_app',
@@ -27,7 +26,8 @@ def _cloud_run_app(
     close_loop: bool = False,
     parser: Optional[ApplicationParser] = None,
     override_color: Optional[bool] = False,
-) -> ApplicationReturn:
+    override_return: Optional[bool] = True,
+) -> Any:
     return run_app(
         app=app,
         loop=loop,
@@ -37,6 +37,7 @@ def _cloud_run_app(
         close_loop=close_loop,
         parser=(lambda *args, **kwargs: argv) if parser is None else parser,
         override_color=override_color,
+        override_return=override_return,
     )
 
 
