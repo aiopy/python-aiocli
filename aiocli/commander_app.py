@@ -34,7 +34,13 @@ __all__ = (
 from .helpers import iscoroutinefunction, resolve_coroutine, resolve_function
 from .logger import logger
 
-CommandHandler = Callable[..., Union[Callable[[Any], Optional[int]], Coroutine[Any, Any, Optional[int]]]]
+CommandHandler = Callable[
+    ...,
+    Union[
+        Callable[[Any], Any],
+        Coroutine[Any, Any, Any],
+    ],
+]
 
 
 class State(Dict[Any, Any]):
@@ -146,7 +152,7 @@ def command(
     )
 
 
-CommandMiddleware = Callable[[Command, Dict[str, Any]], Union[None, Coroutine[Any, Any, None]]]
+CommandMiddleware = Callable[[Command, Dict[str, Any], 'Application'], Union[None, Coroutine[Any, Any, None]]]
 
 CommandExceptionHandler = Callable[
     [BaseException, Command, Dict[str, Any]], Union[Optional[int], Coroutine[Any, Any, Optional[int]]]
@@ -242,6 +248,9 @@ class ApplicationHelpFormatter(RawTextHelpFormatter):
         )
 
 
+ApplicationRawInput = Tuple[Tuple[Any, ...], Dict[str, Any]]
+
+
 class Application:
     _parser: ArgumentParser
     _parsers: Dict[str, ArgumentParser]
@@ -262,6 +271,8 @@ class Application:
     _use_print_for_logging: bool
     _description: _ApplicationDescription
     _color: bool
+    _raw_input: ApplicationRawInput
+    _override_return: bool
 
     def __init__(
         self,
@@ -284,7 +295,13 @@ class Application:
         routers: Optional[Sequence['Application']] = None,
         use_print_for_logging: bool = False,
         color: bool = True,
+        override_return: bool = False,  # if False CommandHandler output will be taken as exit code
     ) -> None:
+        self._raw_input = (
+            (),
+            {},
+        )  # lazy
+        self._override_return = override_return
         self._color = color
         self._use_print_for_logging = use_print_for_logging
         self._app_state = None  # lazy
@@ -336,18 +353,19 @@ class Application:
         self._description = _ApplicationDescription(default_router=[*self._commands.values()], routers={}, color=color)
         self.include_routers([] if routers is None else routers)
 
-    async def __call__(self, args: List[str]) -> int:
-        exit_code: Optional[int] = self._exit_code
+    async def __call__(self, args: List[str]) -> Any:
+        response: Any = self._exit_code
         try:
-            exit_code = await self._execute_command(
+            response = await self._execute_command(
                 name=args[0] if len(args) > 0 else self._default_command,
                 args=args[1:],
             )
         except SystemExit as err:
-            exit_code = err.code  # type: ignore
+            response = err.code
         finally:
-            self._exit_code = self._exit_code if exit_code is None else exit_code
-        return self._exit_code
+            if not self._override_return and isinstance(response, int) and 0 <= response <= 255:
+                self._exit_code = response
+        return response if self._override_return else self._exit_code
 
     def _ensure_command_exists(self, name: str) -> None:
         if name not in self._parsers:
@@ -361,15 +379,15 @@ class Application:
             )
         )
 
-    async def _execute_command(self, name: str, args: List[str]) -> Optional[int]:
+    async def _execute_command(self, name: str, args: List[str]) -> Any:
         self._ensure_command_exists(name=name)
         kwargs = await self._resolve_command_handler_args(name, args)
         kwargs = await self._resolve_command_handler_kwargs(self._commands[name].handler, kwargs)
         try:
             await self._execute_command_middleware(self._before_middleware, self._commands[name], kwargs)
-            exit_code = await self._execute_command_handler(self._commands[name].handler, kwargs)
+            response = await self._execute_command_handler(self._commands[name].handler, kwargs)
             await self._execute_command_middleware(self._after_middleware, self._commands[name], kwargs)
-            return exit_code
+            return response
         except BaseException as err:
             return await self._execute_command_exception_handler(err, self._commands[name], kwargs)
 
@@ -590,9 +608,21 @@ class Application:
                     ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()]),
                 )
             )
-            _ = await resolve_function(
-                *([handler] if len(signature(handler).parameters) == 0 else [handler, cmd, kwargs])  # type: ignore
-            )
+            parameters_count = len(signature(handler).parameters)
+
+            function_args: List[Any] = []
+            if parameters_count == 0:
+                function_args = []
+            elif parameters_count == 1:
+                function_args = [cmd]
+            elif parameters_count == 2:
+                function_args = [cmd, kwargs]
+            elif parameters_count == 3:
+                function_args = [cmd, kwargs, self]
+            else:
+                raise IndexError('Invalid number of parameters to resolve CommandMiddleware')
+
+            _ = await resolve_function(handler, *function_args)
 
     async def _execute_command_hooks(
         self,
@@ -613,9 +643,17 @@ class Application:
                     hook.__name__ if hasattr(hook, '__name__') else 'unknown', id(hook)
                 )
             )
-            _ = await resolve_function(
-                *([hook] if len(signature(hook).parameters) == 0 else [hook, self])  # type: ignore
-            )
+
+            parameters_count = len(signature(hook).parameters)
+
+            if parameters_count == 0:
+                function_args = [hook]
+            elif parameters_count == 1:
+                function_args = [hook, self]  # type: ignore
+            else:
+                raise IndexError('Invalid number of parameters to resolve CommandHook')
+
+            _ = await resolve_function(*function_args)
 
     async def _resolve_command_handler_args(self, name: str, args: List[str]) -> Dict[str, Any]:
         if args:
@@ -685,7 +723,7 @@ class Application:
             value = self.state
         return value
 
-    async def _execute_command_handler(self, handler: CommandHandler, kwargs: Dict[str, Any]) -> int:
+    async def _execute_command_handler(self, handler: CommandHandler, kwargs: Dict[str, Any]) -> Any:
         self._log(
             msg='Executing command handler with: {0}.'.format(
                 ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()])
@@ -693,7 +731,7 @@ class Application:
             if kwargs
             else 'Executing command handler.',
         )
-        return cast(int, await resolve_function(handler, **kwargs))
+        return await resolve_function(handler, **kwargs)
 
     async def _execute_command_exception_handler(
         self,
@@ -753,3 +791,15 @@ class Application:
         for _, parser in self._parsers.items():
             parser.formatter_class = self._parser.formatter_class
             self._update_parser_help(parser, cast(str, parser.usage))
+
+    def set_raw_input(self, *args, **kwargs) -> None:  # type: ignore
+        self._raw_input = args, kwargs
+
+    def get_raw_input(self) -> ApplicationRawInput:
+        return self._raw_input
+
+    def set_override_return(self, value: bool) -> None:
+        self._override_return = value
+
+    def get_override_return(self) -> bool:
+        return self._override_return

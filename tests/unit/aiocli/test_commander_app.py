@@ -50,26 +50,35 @@ def test_application_add_commands() -> None:
 
 @pytest.mark.asyncio
 async def test_application_startup() -> None:
-    on_startup_mock = Mock()
+    def on_startup_mock() -> None:
+        on_startup_mock.called = True
+
+    on_startup_mock.called = False
     app = Application(on_startup=[on_startup_mock])
     await app.startup()
-    on_startup_mock.assert_called_once()
+    assert on_startup_mock.called
 
 
 @pytest.mark.asyncio
 async def test_application_shutdown() -> None:
-    on_shutdown_mock = Mock()
+    def on_shutdown_mock() -> None:
+        on_shutdown_mock.called = True
+
+    on_shutdown_mock.called = False
     app = Application(on_shutdown=[on_shutdown_mock])
     await app.shutdown()
-    on_shutdown_mock.assert_called_once()
+    assert on_shutdown_mock.called
 
 
 @pytest.mark.asyncio
 async def test_application_cleanup() -> None:
-    on_cleanup_mock = Mock()
+    def on_cleanup_mock() -> None:
+        on_cleanup_mock.called = True
+
+    on_cleanup_mock.called = False
     app = Application(on_cleanup=[on_cleanup_mock])
     await app.cleanup()
-    on_cleanup_mock.assert_called_once()
+    assert on_cleanup_mock.called
 
 
 def test_application_default_exit_code() -> None:

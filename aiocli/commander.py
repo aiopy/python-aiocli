@@ -25,7 +25,6 @@ __all__ = (
     # commander
     'run_app',
     'ApplicationParser',
-    'ApplicationReturn',
 )
 
 from aiocli.helpers import all_tasks
@@ -115,21 +114,19 @@ async def _run_app(
     handle_signals: bool = True,
     argv: Optional[List[str]] = None,
     exit_code: bool = True,
-) -> None:
+) -> Any:
     runner = AppRunner(app, loop=loop, handle_signals=handle_signals, exit_code=exit_code)
     args = argv or sys.argv[1:]
     all_hooks = not app.should_ignore_hooks(args)
     ignore_internal_hooks = app.should_ignore_internal_hooks(args)
     await runner.setup(all_hooks=all_hooks, ignore_internal_hooks=ignore_internal_hooks)
     try:
-        await app(args)
+        return await app(args)
     finally:
         await runner.cleanup(all_hooks=all_hooks, ignore_internal_hooks=ignore_internal_hooks)
 
 
 ApplicationParser = Callable[..., Optional[List[str]]]
-
-ApplicationReturn = Union[int, None, Callable[..., Optional[int]]]
 
 
 def run_app(
@@ -142,14 +139,27 @@ def run_app(
     close_loop: bool = True,
     parser: Optional[ApplicationParser] = None,
     override_color: Optional[bool] = None,
-) -> ApplicationReturn:
+    override_return: Optional[bool] = None,
+) -> Any:
     def wrapper(*args, **kwargs) -> Optional[int]:  # type: ignore
         loop_ = loop or get_event_loop()
+
         app_ = app if isinstance(app, Application) else app()
+
+        if override_return is not None:
+            app_.set_override_return(override_return)
+
+        if parser is None:
+            app_.set_raw_input(argv)
+        else:
+            app_.set_raw_input(*args, **kwargs)
+
         if override_color is not None:
             app_.colorize(override_color)
+
+        response: Any = None
         try:
-            loop_.run_until_complete(
+            response = loop_.run_until_complete(
                 _run_app(
                     app_,
                     loop=loop_,
@@ -167,6 +177,7 @@ def run_app(
                 loop_.run_until_complete(loop_.shutdown_asyncgens())
             if close_loop and not loop_.is_closed():
                 loop_.close()
-        return app_.exit_code
+
+        return response if app_.get_override_return() else app_.exit_code
 
     return wrapper() if parser is None else wrapper
