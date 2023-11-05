@@ -1,7 +1,7 @@
 import asyncio
 import signal
 import sys
-from asyncio import gather, get_event_loop
+from asyncio import all_tasks, gather, get_event_loop
 from asyncio.events import AbstractEventLoop
 from typing import Any, Callable, List, Optional, Set, Union
 
@@ -26,8 +26,6 @@ __all__ = (
     'run_app',
     'ApplicationParser',
 )
-
-from aiocli.helpers import all_tasks
 
 
 class GracefulExit(SystemExit):
