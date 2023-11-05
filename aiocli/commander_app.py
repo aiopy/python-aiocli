@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from argparse import Action, ArgumentParser, RawTextHelpFormatter
+from asyncio import iscoroutinefunction
 from dataclasses import dataclass, field
 from inspect import signature
 from typing import (
@@ -31,7 +32,7 @@ __all__ = (
     'InternalCommandHook',
 )
 
-from .helpers import iscoroutinefunction, resolve_coroutine, resolve_function
+from .helpers import resolve_coroutine, resolve_function
 from .logger import logger
 
 CommandHandler = Callable[
@@ -519,7 +520,7 @@ class Application:
         if isinstance(state, Dict):
             return State(state)
         if iscoroutinefunction(state):
-            return cls._resolve_state(resolve_coroutine(state))  # type: ignore
+            return cls._resolve_state(resolve_coroutine(state))
         if callable(state):
             return cls._resolve_state(state())  # type: ignore
         return State()

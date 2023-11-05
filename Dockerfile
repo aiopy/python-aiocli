@@ -1,4 +1,4 @@
-FROM docker.io/library/python:3.7-slim AS base
+FROM docker.io/library/python:3.8-slim AS base
 
 RUN apt update -y && python3 -m pip install --upgrade pip
 
