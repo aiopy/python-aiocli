@@ -4,11 +4,11 @@ requires = ["setuptools"]
 
 [project]
 authors = [
-  { name = "ticdenis", email = "denisnavarroalcaide@outlook.es" },
+  { name = "ticdenis", email = "navarrodenis940503@outlook.com" },
   { name = "yasti4", email = "adria_4_@hotmail.com" },
 ]
 maintainers = [
-  { name = "ticdenis", email = "denisnavarroalcaide@outlook.es" }
+  { name = "ticdenis", email = "navarrodenis940503@outlook.com" }
 ]
 classifiers = [
   "Intended Audience :: Information Technology",
@@ -24,11 +24,11 @@ classifiers = [
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
 ]
 dependencies = []
 description = "Simple and lightweight async console runner."
@@ -37,42 +37,44 @@ keywords = ["asyncio", "async", "aio", "cli", "console"]
 license = { text = "MIT" }
 name = "aiocli"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 [project.optional-dependencies]
 dev = [
-  'pre-commit>=3.3.3',
+  "pre-commit>=3.8.0",
   'tomli>=2.0.1; python_version<"3.11"',
-  'types-toml>=0.10.8.7; python_version<"3.11"',
+  'types-toml>=0.10.8.20240310; python_version<"3.11"',
 ]
 deploy = [
-  "build>=0.10.0",
-  'setuptools>=68.1.2',
-  "twine>=4.0.2",
-  "wheel>=0.41.1",
+  "build>=1.2.2",
+  "setuptools>=75.1.0",
+  "twine>=5.1.1",
+  "wheel>=0.44.0",
 ]
 docs = [
-  "mkdocs>=1.5.2",
-  "mkdocs-material>=9.1.21",
+  "mkdocs>=1.6.1",
+  "mkdocs-material>=9.5.37",
 ]
 fmt = [
-  'black>=23.7.0',
-  'isort>=5.12.0',
+  "black>=24.8.0",
+  "isort>=5.13.2",
 ]
 security-analysis = [
-  "bandit>=1.7.5",
-  "liccheck>=0.9.1",
+  "bandit>=1.7.4",
+  "liccheck>=0.9.2",
+  "setuptools>=75.1.0", # https://github.com/dhatim/python-license-check/issues/114
 ]
 static-analysis = [
-  'mypy>=1.5.1',
-  "pylint>=2.17.5",
+  "mypy>=1.11.2",
+  "pylint>=3.3.1",
 ]
 test = [
-  "psutil>=5.9.5",
-  "pytest>=7.4.0",
-  "pytest-asyncio>=0.21.1",
-  "pytest-cov>=4.1.0",
-  "pytest-xdist>=3.3.1",
+  "nest-asyncio>=1.6.0",
+  "psutil>=6.0.0",
+  "pytest>=8.3.3",
+  "pytest-asyncio>=0.24.0",
+  "pytest-cov>=5.0.0",
+  "pytest-xdist>=3.6.1",
 ]
 
 [project.urls]
@@ -89,6 +91,7 @@ include = ["aiocli*"]
 "aiocli" = ["py.typed"]
 
 [tool.bandit]
+exclude_dirs = ["docs", "docs_src", "sample", "var"]
 skips = ["B101", "B311"]
 
 [tool.black]
@@ -122,9 +125,11 @@ cache_dir = "var/mypy"
 [tool.pylint.master]
 jobs = "0"
 [tool.pylint.messages_control]
-disable = "C0103,C0114,C0115,C0116,C0205,C0209,C0301,E0401,E0611,E1135,E1136,R0801,R0902,R0903,R0904,R0913,R0914,R1704,R1725,W0108,W0212,W0235,W0236,W0603,W0611,W0622,W0703,W0707,W1202"
+disable = "C0103,C0114,C0115,C0116,C0205,C0209,C0301,E0401,E0611,E1135,E1136,R0801,R0902,R0903,R0904,R0913,R0914,R0917,R1704,R1725,R1731,W0108,W0212,W0235,W0236,W0603,W0611,W0622,W0703,W0707,W1202"
 
 [tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"
 cache_dir = "var/pytest"
 addopts = "-q -n auto -p no:warnings --no-cov-on-fail"
 testpaths = ["tests"]
@@ -143,7 +148,6 @@ unit-tests = "python3 -m pytest tests/unit"
 integration-tests = "python3 -m pytest tests/integration"
 functional-tests = "python3 -m pytest tests/functional"
 coverage = "python3 -m pytest --cov --cov-report=html"
-tox = "python3 -m pip install -U tox tox-gh-actions && tox"
 clean = """python3 -c \"
 from glob import iglob
 from shutil import rmtree
@@ -151,6 +155,47 @@ from shutil import rmtree
 for pathname in ['./build', './*.egg-info', './dist', './var', '**/__pycache__']:
   for path in iglob(pathname, recursive=True):
     rmtree(path, ignore_errors=True)
+\""""
+check-dependency-update = """python3 -c \"
+from contextlib import suppress
+from json import loads
+from re import match
+try:
+    from tomllib import load  # Python 3.11+
+except ModuleNotFoundError:
+    try:
+        from tomli import load
+    except ModuleNotFoundError:
+        from subprocess import run
+        run(['python3 -m pip install -U tomli'], stdout=-3, shell=True)
+        from tomli import load
+from urllib.request import urlopen
+
+def get_latest_version(package_name, pypi_url = 'https://pypi.org'):
+    with suppress(Exception), urlopen(f'{pypi_url}/pypi/{package_name}/json') as res:
+        return loads(res.read().decode()).get('info', {}).get('version')
+
+def parse_dependency(dep):
+    result = match(r'([a-zA-Z0-9_-]+)(\\[.*\\])?(?:([<>=!~]+)(.+))?', dep)
+    return result.groups() if result else (dep, '', '', '')
+
+def compare_deps(deps):
+    for pkg, extras, op, ver in [parse_dependency(dep) for dep in deps]:
+        if pkg and op and ver and (last := get_latest_version(pkg)):
+            if (op == '==' and ver != last) or (op == '>=' and last > ver) or (op == '<=' and last < ver):
+                yield (pkg + (extras or '') + ' (Current: ' + ver + ', Latest: ' + last + ')')
+
+with open('pyproject.toml', 'rb') as f:
+    pyproject = load(f).get('project', {})
+    deps = compare_deps(pyproject.get('dependencies', []))
+    opt_deps = {group: compare_deps(deps) for group, deps in pyproject.get('optional-dependencies', {}).items()}
+    parsed_deps = '\\n'.join(deps)
+    parsed_opt_deps = [(f'[{opt_dep_group}]\\n', '\\n'.join(opt_deps[opt_dep_group])) for opt_dep_group in opt_deps]
+    if not parsed_deps and not (''.join([v for _, v in parsed_opt_deps])):
+        print('Already up-to-date.')
+    else:
+        print('# pyproject.toml\\n[project.dependencies]\\n{0}\\n[project.optional-dependencies]{1}'.format(parsed_deps, ''.join([k + v for k, v in parsed_opt_deps])))
+        exit(1)
 \""""
 dev-server = """python3 -c \"
 from asyncio import CancelledError, TimeoutError as AsyncTimeoutError, get_event_loop, sleep, wait_for
@@ -183,25 +228,3 @@ async def run_development_server(timeout: int) -> None:
 if __name__ >= '__main__':
   get_event_loop().run_until_complete(run_development_server(timeout=3600))  # 1h
 \""""
-
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-envlist = py38, py39, py310, py311, py312
-isolated_build = True
-skipsdist = True
-skip_missing_interpreters = True
-toxworkdir = var/tox
-
-[gh-actions]
-python =
-    3.8: py38
-    3.9: py39
-    3.10: py310
-    3.11: py311
-    3.12: py312
-
-[testenv]
-deps = .[dev,deploy,docs,fmt,security-analysis,static-analysis,test]
-commands = pytest
-"""

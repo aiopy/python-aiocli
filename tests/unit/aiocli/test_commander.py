@@ -3,8 +3,6 @@ from platform import system
 from typing import Optional
 from unittest.mock import Mock
 
-import pytest
-
 # noinspection PyProtectedMembers
 from aiocli.commander import AppRunner, GracefulExit, _raise_graceful_exit
 from aiocli.commander_app import Application
@@ -15,7 +13,6 @@ def test_graceful_exit_exception_has_code_0() -> None:
     assert GracefulExit().code == 0
 
 
-@pytest.mark.asyncio
 async def test_app_runner_setup_and_cleanup(event_loop: AbstractEventLoop) -> None:
     application_mock = amock(Application, ['startup', 'shutdown', 'cleanup', 'exit'])
     application_mock.startup.return_value = None

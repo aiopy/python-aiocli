@@ -15,10 +15,10 @@ jobs:
     env:
       VERSION: ${{ github.event.inputs.release_version }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13.0-rc.2'
       - name: version
         run: sed -i "s/__version__ = '.*'/__version__ = '$VERSION'/g" aiocli/__init__.py
       - name: deps
@@ -28,7 +28,8 @@ jobs:
           TWINE_USERNAME: ${{ secrets.POETRY_HTTP_BASIC_PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.POETRY_HTTP_BASIC_PYPI_PASSWORD }}
         run: |
-          git config user.name ${{ github.actor }}
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
           git commit . -m "release: v${VERSION}"
           git push origin main
           git tag $VERSION
