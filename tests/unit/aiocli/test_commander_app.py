@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional
 from unittest.mock import Mock
 
-import pytest
+from pytest import mark
 
 from aiocli.commander_app import Application, Command, command
 
@@ -48,7 +48,6 @@ def test_application_add_commands() -> None:
     assert app.get_command(name=command_.name)
 
 
-@pytest.mark.asyncio
 async def test_application_startup() -> None:
     def on_startup_mock() -> None:
         on_startup_mock.called = True
@@ -59,7 +58,6 @@ async def test_application_startup() -> None:
     assert on_startup_mock.called
 
 
-@pytest.mark.asyncio
 async def test_application_shutdown() -> None:
     def on_shutdown_mock() -> None:
         on_shutdown_mock.called = True
@@ -70,7 +68,6 @@ async def test_application_shutdown() -> None:
     assert on_shutdown_mock.called
 
 
-@pytest.mark.asyncio
 async def test_application_cleanup() -> None:
     def on_cleanup_mock() -> None:
         on_cleanup_mock.called = True
@@ -89,19 +86,16 @@ def test_application_specific_exit_code() -> None:
     assert Application(default_exit_code=1).exit_code == 1
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize('command_name', ['-h', '--help'])
+@mark.parametrize('command_name', ['-h', '--help'])
 async def test_application_print_help_and_return_exit_code_0_when_command_is(command_name: str) -> None:
     assert await Application().__call__([command_name]) == 0
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize('command_name', ['--version'])
+@mark.parametrize('command_name', ['--version'])
 async def test_application_print_version_and_return_exit_code_0_when_command_is_(command_name: str) -> None:
     assert await Application().__call__([command_name]) == 0
 
 
-@pytest.mark.asyncio
 async def test_application_execute_async_command_and_return_exit_code_0() -> None:
     app = Application()
 
@@ -112,7 +106,6 @@ async def test_application_execute_async_command_and_return_exit_code_0() -> Non
     assert await app.__call__(['test']) == 0
 
 
-@pytest.mark.asyncio
 async def test_application_execute_sync_command_and_return_exit_code_0() -> None:
     app = Application()
 
@@ -123,7 +116,6 @@ async def test_application_execute_sync_command_and_return_exit_code_0() -> None
     assert await app.__call__(['test']) == 0
 
 
-@pytest.mark.asyncio
 async def test_application_execute_exception_handler_and_return_specific_exit_code() -> None:
     app = Application()
 
