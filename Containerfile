@@ -4,8 +4,7 @@ WORKDIR /app
 
 RUN conda install -y --download-only "python=3.12" && \
     conda install -y --download-only "python=3.11" && \
-    conda install -y --download-only "python=3.10" && \
-    conda install -y --download-only "python=3.9"
+    conda install -y --download-only "python=3.10"
 
 COPY . ./
 
@@ -25,9 +24,4 @@ RUN --mount=type=cache,target=/root/.cache/pip python3 run-script dev-install
 FROM miniconda3 AS py310
 
 RUN conda install -y "python=3.10"
-RUN --mount=type=cache,target=/root/.cache/pip python3 run-script dev-install
-
-FROM miniconda3 AS py39
-
-RUN conda install -y "python=3.9"
 RUN --mount=type=cache,target=/root/.cache/pip python3 run-script dev-install

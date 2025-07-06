@@ -3,13 +3,11 @@ services:
     build:
       context: .
       dockerfile: Containerfile
-      target: py39
 #      target: py310
 #      target: py311
-#      target: py312
-    image: ghcr.io/aiopy/python-aiocli:py39-${VERSION:-latest}
+      target: py312
 #    image: ghcr.io/aiopy/python-aiocli:py310-${VERSION:-latest}
 #    image: ghcr.io/aiopy/python-aiocli:py311-${VERSION:-latest}
-#    image: ghcr.io/aiopy/python-aiocli:py312-${VERSION:-latest}
+    image: ghcr.io/aiopy/python-aiocli:py312-${VERSION:-latest}
     volumes:
       - .:/app
