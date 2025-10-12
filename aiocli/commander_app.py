@@ -726,11 +726,13 @@ class Application:
 
     async def _execute_command_handler(self, handler: CommandHandler, kwargs: Dict[str, Any]) -> Any:
         self._log(
-            msg='Executing command handler with: {0}.'.format(
-                ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()])
-            )
-            if kwargs
-            else 'Executing command handler.',
+            msg=(
+                'Executing command handler with: {0}.'.format(
+                    ', '.join(['{0}={1}'.format(key, val) for key, val in kwargs.items()])
+                )
+                if kwargs
+                else 'Executing command handler.'
+            ),
         )
         return await resolve_function(handler, **kwargs)
 
