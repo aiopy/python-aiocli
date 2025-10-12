@@ -1,5 +1,32 @@
 ## CHANGELOG
 
+### **1.11.x**
+
+* Drop Python 3.9 support.
+* Bump dev deps.
+
+### **1.10.x**
+
+* Drop Python 3.8 support.
+* Add Python 3.13 support.
+
+### **1.9.x**
+
+* Drop Python 3.7 support.
+* Add Python 3.12 support.
+
+### **1.8.x**
+
+* Add more controls over the original input and app output.
+
+### **1.7.x**
+
+* Improve commands and app help usage.
+* Lazy loading of the App and State instances.
+* Improve command hooks.
+* Add after middlware hook.
+* Colorize help usage.
+
 ### **1.6.x**
 
 * Add State.

@@ -1,7 +1,14 @@
 import asyncio
 import signal
 import sys
-from asyncio import all_tasks, gather, get_event_loop
+from asyncio import (
+    all_tasks,
+    gather,
+    get_event_loop,
+    get_running_loop,
+    new_event_loop,
+    set_event_loop,
+)
 from asyncio.events import AbstractEventLoop
 from typing import Any, Callable, List, Optional, Set, Union
 
@@ -140,7 +147,16 @@ def run_app(
     override_return: Optional[bool] = None,
 ) -> Any:
     def wrapper(*args, **kwargs) -> Optional[int]:  # type: ignore
-        loop_ = loop or get_event_loop()
+        try:
+            # Try to get the currently running event loop (Python ≥3.10 preferred API).
+            # In Python 3.14+, get_event_loop() no longer creates a default loop automatically.
+            # If no loop is running yet, this raises RuntimeError — we handle that below.
+            loop_ = loop or get_running_loop()
+        except RuntimeError:
+            # No event loop exists in the current thread (Python 3.14+ behavior).
+            # Create and set a new loop to preserve backward compatibility with Python ≤3.13.
+            loop_ = new_event_loop()
+            set_event_loop(loop_)
 
         app_ = app if isinstance(app, Application) else app()
 

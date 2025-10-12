@@ -4,9 +4,11 @@ from unittest.mock import AsyncMock, Mock, patch
 
 from pytest import fixture
 
+
 @fixture(scope='session')
 def event_loop() -> AbstractEventLoop:
     return get_event_loop_policy().new_event_loop()
+
 
 def amock(target: Union[str, object], attributes: Optional[List[str]] = None) -> Mock:
     target_async_mock = AsyncMock()
